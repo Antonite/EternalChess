@@ -12,9 +12,8 @@ namespace EternalChess
         public Location after;
         public string color;
         public string piece;
-        public bool causedCheck;
 
-        public Move(Location before, Location after, string color, string piece, bool causedCheck)
+        public Move(Location before, Location after, string color, string piece)
         {
             this.before = before;
             this.after = after;

@@ -9,22 +9,31 @@ namespace EternalChess
         Move previousMove;
         Square whiteKing;
         Square blackKing;
+        bool whiteKingMoved = false;
+        bool blackKingMoved = false;
 
         public Board()
         {
             initialize();
         }
 
-        public List<int> move(string color)
+        public Move move(string color)
         {
-            if (previousMove.causedCheck)
+            string enemyColor = color == "white" ? "black" : "white";
+            Square currentKing = color == "white" ? whiteKing : blackKing;
+            Move move = null;
+            Location locationOfMove = null;
+            bool isChecked = isSafe(currentKing.row, currentKing.column, enemyColor);
+            if (isChecked)
             {
-                List<Square> attackers = calculateCheckers(color);
+                locationOfMove = kingEscape(color, enemyColor);
+                move = new Move(new Location(currentKing.row, currentKing.column), locationOfMove, "King", color);
+                return move;
             }
 
             return null;
         }
-
+        
         private List<Square> calculateCheckers(string color)
         {
             Square currentKing = color == "white" ? whiteKing : blackKing;
@@ -226,7 +235,11 @@ namespace EternalChess
                     for(int i = currentKing.column; i >= 0; i--)
                     {
                         if (board[previousMove.before.row][i].occupiedBy == null) continue;
-                        if (isEnemyQueenRock(previousMove.before.row, i, enemyColor)) attackers.Add(new Square(previousMove.before.row, i, board[previousMove.before.row][i].occupiedBy));
+                        if (isEnemyQueenRock(previousMove.before.row, i, enemyColor))
+                        {
+                            attackers.Add(new Square(previousMove.before.row, i, board[previousMove.before.row][i].occupiedBy));
+                            return attackers;
+                        }
                         else break;
                     }
                 }
@@ -236,7 +249,11 @@ namespace EternalChess
                     for (int i = currentKing.column; i <= 7; i++)
                     {
                         if (board[previousMove.before.row][i].occupiedBy == null) continue;
-                        if (isEnemyQueenRock(previousMove.before.row, i, enemyColor)) attackers.Add(new Square(previousMove.before.row, i, board[previousMove.before.row][i].occupiedBy));
+                        if (isEnemyQueenRock(previousMove.before.row, i, enemyColor))
+                        {
+                            attackers.Add(new Square(previousMove.before.row, i, board[previousMove.before.row][i].occupiedBy));
+                            return attackers;
+                        }
                         else break;
                     }
                 }
@@ -250,7 +267,11 @@ namespace EternalChess
                     for (int i = currentKing.row; i >= 0; i--)
                     {
                         if (board[i][previousMove.before.column].occupiedBy == null) continue;
-                        if (isEnemyQueenRock(i, previousMove.before.column, enemyColor)) attackers.Add(new Square(i, previousMove.before.column, board[previousMove.before.row][i].occupiedBy));
+                        if (isEnemyQueenRock(i, previousMove.before.column, enemyColor))
+                        {
+                            attackers.Add(new Square(i, previousMove.before.column, board[previousMove.before.row][i].occupiedBy));
+                            return attackers;
+                        }
                         else break;
                     }
                 }
@@ -260,7 +281,11 @@ namespace EternalChess
                     for (int i = currentKing.row; i <= 7; i++)
                     {
                         if (board[i][previousMove.before.column].occupiedBy == null) continue;
-                        if (isEnemyQueenRock(i, previousMove.before.column, enemyColor)) attackers.Add(new Square(i, previousMove.before.column, board[previousMove.before.row][i].occupiedBy));
+                        if (isEnemyQueenRock(i, previousMove.before.column, enemyColor))
+                        {
+                            attackers.Add(new Square(i, previousMove.before.column, board[previousMove.before.row][i].occupiedBy));
+                            return attackers;
+                        }
                         else break;
                     }
                 }
@@ -277,7 +302,11 @@ namespace EternalChess
                         for (int r = currentKing.row, c = currentKing.column; r < previousMove.before.row && c > previousMove.before.column; r++, c--)
                         {
                             if (board[r][c].occupiedBy == null) continue;
-                            if (isEnemyQueenBishop(r, c, enemyColor)) attackers.Add(new Square(r, c, board[r][c].occupiedBy));
+                            if (isEnemyQueenBishop(r, c, enemyColor))
+                            {
+                                attackers.Add(new Square(r, c, board[r][c].occupiedBy));
+                                return attackers;
+                            }
                             else break;
                         }
                     }
@@ -287,7 +316,11 @@ namespace EternalChess
                         for (int r = currentKing.row, c = currentKing.column; r < previousMove.before.row && c < previousMove.before.column; r++, c++)
                         {
                             if (board[r][c].occupiedBy == null) continue;
-                            if (isEnemyQueenBishop(r, c, enemyColor)) attackers.Add(new Square(r, c, board[r][c].occupiedBy));
+                            if (isEnemyQueenBishop(r, c, enemyColor))
+                            {
+                                attackers.Add(new Square(r, c, board[r][c].occupiedBy));
+                                return attackers;
+                            }
                             else break;
                         }
                     }
@@ -301,7 +334,11 @@ namespace EternalChess
                         for (int r = currentKing.row, c = currentKing.column; r > previousMove.before.row && c > previousMove.before.column; r--, c--)
                         {
                             if (board[r][c].occupiedBy == null) continue;
-                            if (isEnemyQueenBishop(r, c, enemyColor)) attackers.Add(new Square(r, c, board[r][c].occupiedBy));
+                            if (isEnemyQueenBishop(r, c, enemyColor))
+                            {
+                                attackers.Add(new Square(r, c, board[r][c].occupiedBy));
+                                return attackers;
+                            }
                             else break;
                         }
                     }
@@ -311,7 +348,11 @@ namespace EternalChess
                         for (int r = currentKing.row, c = currentKing.column; r > previousMove.before.row && c < previousMove.before.column; r--, c++)
                         {
                             if (board[r][c].occupiedBy == null) continue;
-                            if (isEnemyQueenBishop(r, c, enemyColor)) attackers.Add(new Square(r, c, board[r][c].occupiedBy));
+                            if (isEnemyQueenBishop(r, c, enemyColor))
+                            {
+                                attackers.Add(new Square(r, c, board[r][c].occupiedBy));
+                                return attackers;
+                            }
                             else break;
                         }
                     }
@@ -322,39 +363,440 @@ namespace EternalChess
             return attackers;
         }
 
-        private List<int> kingEscape(string color)
+        private Location kingEscape(string color, string enemyColor)
         {
-            var row = 0;
-            var column = 0;
-            foreach (List<Square> rows in board){
-                foreach (Square square in rows)
+            Square currentKing = color == "white" ? whiteKing : blackKing;
+            List<Square> attackers = calculateCheckers(color);
+            if(attackers.Count == 2) return moveKing(currentKing.row, currentKing.column, color);
+            else
+            {
+                #region Find possible cover squares
+                List<Location> possibleCoverSquares = new List<Location>();
+                switch (attackers[0].occupiedBy.type)
                 {
-                    if(square.occupiedBy.type == "King" && square.occupiedBy.color == color)
+                    case "Bishop":
+                        // above
+                        if (attackers[0].row > currentKing.row)
+                        {
+                            // left
+                            if (attackers[0].column < currentKing.column)
+                            {
+                                for (int r = currentKing.row, c = currentKing.column; r < attackers[0].row && c > attackers[0].column; r++, c--)
+                                {
+                                        possibleCoverSquares.Add(new Location(r, c));
+                                }
+                            }
+                            // right
+                            else
+                            {
+                                for (int r = currentKing.row, c = currentKing.column; r < attackers[0].row && c < attackers[0].column; r++, c++)
+                                {
+                                        possibleCoverSquares.Add(new Location(r, c));
+                                }
+                            }
+                        }
+                        // below
+                        else
+                        {
+                            // left
+                            if (attackers[0].column < currentKing.column)
+                            {
+                                for (int r = currentKing.row, c = currentKing.column; r > attackers[0].row && c > attackers[0].column; r--, c--)
+                                {
+                                        possibleCoverSquares.Add(new Location(r, c));
+                                }
+                            }
+                            // right
+                            else
+                            {
+                                for (int r = currentKing.row, c = currentKing.column; r > attackers[0].row && c < attackers[0].column; r--, c++)
+                                {
+                                        possibleCoverSquares.Add(new Location(r, c));
+                                }
+                            }
+                        }
+                        break;
+                    case "Rook":
+                        // right
+                        if (attackers[0].column > currentKing.column)
+                        {
+                            for (int c = currentKing.column; c < attackers[0].column; c++)
+                            {
+                                possibleCoverSquares.Add(new Location(currentKing.row, c));
+                            }
+                        }
+                        // left
+                        else if (attackers[0].column < currentKing.column)
+                        {
+                            for (int c = currentKing.column; c > attackers[0].column; c--)
+                            {
+                                possibleCoverSquares.Add(new Location(currentKing.row, c));
+                            }
+                        }
+                        // below
+                        else if (attackers[0].row < currentKing.row)
+                        {
+                            for (int r = currentKing.row; r > attackers[0].row; r--)
+                            {
+                                possibleCoverSquares.Add(new Location(r, currentKing.column));
+                            }
+                        }
+                        // above
+                        else if (attackers[0].row > currentKing.row)
+                        {
+                            for (int r = currentKing.row; r < attackers[0].row; r++)
+                            {
+                                possibleCoverSquares.Add(new Location(r, currentKing.column));
+                            }
+                        }
+                        break;
+                    case "Queen":
+                        // horizontal or vertical
+                        if (attackers[0].row == currentKing.row || attackers[0].column == currentKing.column)
+                        {
+                            if (attackers[0].column > currentKing.column)
+                            {
+                                for (int c = currentKing.column; c < attackers[0].column; c++)
+                                {
+                                    possibleCoverSquares.Add(new Location(currentKing.row, c));
+                                }
+                            }
+                            // left
+                            else if (attackers[0].column < currentKing.column)
+                            {
+                                for (int c = currentKing.column; c > attackers[0].column; c--)
+                                {
+                                    possibleCoverSquares.Add(new Location(currentKing.row, c));
+                                }
+                            }
+                            // below
+                            else if (attackers[0].row < currentKing.row)
+                            {
+                                for (int r = currentKing.row; r > attackers[0].row; r--)
+                                {
+                                    possibleCoverSquares.Add(new Location(r, currentKing.column));
+                                }
+                            }
+                            // above
+                            else if (attackers[0].row > currentKing.row)
+                            {
+                                for (int r = currentKing.row; r < attackers[0].row; r++)
+                                {
+                                    possibleCoverSquares.Add(new Location(r, currentKing.column));
+                                }
+                            }
+                        }
+                        // diagonal
+                        else
+                        {
+                            // above
+                            if (attackers[0].row > currentKing.row)
+                            {
+                                // left
+                                if (attackers[0].column < currentKing.column)
+                                {
+                                    for (int r = currentKing.row, c = currentKing.column; r < attackers[0].row && c > attackers[0].column; r++, c--)
+                                    {
+                                        possibleCoverSquares.Add(new Location(r, c));
+                                    }
+                                }
+                                // right
+                                else
+                                {
+                                    for (int r = currentKing.row, c = currentKing.column; r < attackers[0].row && c < attackers[0].column; r++, c++)
+                                    {
+                                        possibleCoverSquares.Add(new Location(r, c));
+                                    }
+                                }
+                            }
+                            // below
+                            else
+                            {
+                                // left
+                                if (attackers[0].column < currentKing.column)
+                                {
+                                    for (int r = currentKing.row, c = currentKing.column; r > attackers[0].row && c > attackers[0].column; r--, c--)
+                                    {
+                                        possibleCoverSquares.Add(new Location(r, c));
+                                    }
+                                }
+                                // right
+                                else
+                                {
+                                    for (int r = currentKing.row, c = currentKing.column; r > attackers[0].row && c < attackers[0].column; r--, c++)
+                                    {
+                                        possibleCoverSquares.Add(new Location(r, c));
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    default: break;
+                }
+
+                #endregion
+                #region Try cover the king
+                if (possibleCoverSquares.Count == 0) return moveKing(currentKing.row, currentKing.column, color);
+                foreach(List<Square> rows in board)
+                {
+                    foreach (Square square in rows)
                     {
-                        row = square.row;
-                        column = square.column;
-                        return moveKing(row, column, color);
+                        if(square.occupiedBy != null && square.occupiedBy.color == color)
+                        {
+                            List<Location> possibleMoves = findPossibleMoves(new Location(square.row, square.column), color, enemyColor);
+                            foreach(Location possibleCoverMove in possibleCoverSquares)
+                            {
+                                // cover found
+                                if (possibleMoves.Contains(possibleCoverMove))
+                                {
+                                    Piece takenPiece = board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy;
+                                    board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy = square.occupiedBy;
+                                    square.occupiedBy = null;
+                                    bool isMoveSafe = isSafe(currentKing.row, currentKing.column, enemyColor);
+                                    square.occupiedBy = board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy;
+                                    board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy = takenPiece;
+                                    if (isMoveSafe) return possibleCoverMove;
+                                }
+                            }
+                        }
                     }
                 }
+                #endregion
             }
-
-            return null;
+            return moveKing(currentKing.row, currentKing.column, color);
         }
 
-        private List<int> moveKing(int row, int column, string color)
+        private List<Location> findPossibleMoves(Location location, string color, string enemyColor)
+        {
+            Square square = board[location.row][location.column];
+            List<Location> possibleMoves = new List<Location>();
+            switch (square.occupiedBy.type)
+            {
+                #region bishop
+                case "Bishop":
+                    // top left
+                    for (int r = location.row, c = location.column; r <= 7 && c >= 0; r++, c--)
+                    {
+                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        else break;
+                    }
+                    // top right
+                    for (int r = location.row, c = location.column; r <= 7 && c <= 7; r++, c++)
+                    {
+                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        else break;
+                    }
+                    // bottom left
+                    for (int r = location.row, c = location.column; r >= 0 && c >= 0; r--, c--)
+                    {
+                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        else break;
+                    }
+                    // bottom right
+                    for (int r = location.row, c = location.column; r >= 0 && c <= 7; r--, c++)
+                    {
+                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        else break;
+                    }
+                    break;
+                #endregion
+                #region rook
+                case "Rook":
+                    // right
+                    for (int c = location.column; c <= 7 ; c++)
+                    {
+                        if (board[location.row][c].occupiedBy == null || board[location.row][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(location.row, c));
+                        else break;
+                    }
+                    // left
+                    for (int c = location.column; c >= 0; c--)
+                    {
+                        if (board[location.row][c].occupiedBy == null || board[location.row][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(location.row, c));
+                        else break;
+                    }
+                    // below
+                    for (int r = location.row; r >= 0; r--)
+                    {
+                        if (board[r][location.column].occupiedBy == null || board[r][location.column].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, location.column));
+                        else break;
+                    }
+                    // above
+                    for (int r = location.row; r <= 7; r++)
+                    {
+                        if (board[r][location.column].occupiedBy == null || board[r][location.column].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, location.column));
+                        else break;
+                    }
+                    break;
+                #endregion
+                #region queen
+                case "Queen":
+                    // right
+                    for (int c = location.column; c <= 7; c++)
+                    {
+                        if (board[location.row][c].occupiedBy == null || board[location.row][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(location.row, c));
+                        else break;
+                    }
+                    // left
+                    for (int c = location.column; c >= 0; c--)
+                    {
+                        if (board[location.row][c].occupiedBy == null || board[location.row][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(location.row, c));
+                        else break;
+                    }
+                    // below
+                    for (int r = location.row; r >= 0; r--)
+                    {
+                        if (board[r][location.column].occupiedBy == null || board[r][location.column].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, location.column));
+                        else break;
+                    }
+                    // above
+                    for (int r = location.row; r <= 7; r++)
+                    {
+                        if (board[r][location.column].occupiedBy == null || board[r][location.column].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, location.column));
+                        else break;
+                    }
+                    // top left
+                    for (int r = location.row, c = location.column; r <= 7 && c >= 0; r++, c--)
+                    {
+                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        else break;
+                    }
+                    // top right
+                    for (int r = location.row, c = location.column; r <= 7 && c <= 7; r++, c++)
+                    {
+                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        else break;
+                    }
+                    // bottom left
+                    for (int r = location.row, c = location.column; r >= 0 && c >= 0; r--, c--)
+                    {
+                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        else break;
+                    }
+                    // bottom right
+                    for (int r = location.row, c = location.column; r >= 0 && c <= 7; r--, c++)
+                    {
+                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        else break;
+                    }
+                    break;
+                #endregion
+                #region pawn
+                case "Pawn":
+                    // can move 2 spaces
+                    if(color == "white")
+                    {
+                        // move 2
+                        if (location.row == 1 && isValid(location.row + 2, location.column) && board[location.row + 2][location.column].occupiedBy == null)
+                            possibleMoves.Add(new Location(location.row + 2, location.column));
+                        // move 1
+                        if (isValid(location.row + 1, location.column) && board[location.row + 1][location.column].occupiedBy == null)
+                            possibleMoves.Add(new Location(location.row + 1, location.column));
+                        // take left
+                        if (isValid(location.row + 1, location.column - 1) 
+                            && board[location.row + 1][location.column - 1].occupiedBy != null
+                            && board[location.row + 1][location.column - 1].occupiedBy.color == "black")
+                            possibleMoves.Add(new Location(location.row + 1, location.column - 1));
+                        // take right
+                        if (isValid(location.row + 1, location.column + 1)
+                            && board[location.row + 1][location.column + 1].occupiedBy != null
+                            && board[location.row + 1][location.column + 1].occupiedBy.color == "black")
+                            possibleMoves.Add(new Location(location.row + 1, location.column + 1));
+                        // En passant
+                        if (location.row == 4 && previousMove.piece == "Pawn" && 
+                            (previousMove.before.row - previousMove.after.row) == 2 &&
+                            Math.Abs(previousMove.after.column - location.column) == 1)
+                        {
+                            possibleMoves.Add(new Location(location.row + 1, previousMove.after.column));
+                        }
+                        break;
+                    }
+                    else
+                    {
+                        // move 2
+                        if (location.row == 6 && isValid(location.row - 2, location.column) && board[location.row - 2][location.column].occupiedBy == null)
+                            possibleMoves.Add(new Location(location.row - 2, location.column));
+                        // move 1
+                        if (isValid(location.row - 1, location.column) && board[location.row + 1][location.column].occupiedBy == null)
+                            possibleMoves.Add(new Location(location.row - 1, location.column));
+                        // take left
+                        if (isValid(location.row - 1, location.column - 1)
+                            && board[location.row - 1][location.column - 1].occupiedBy != null
+                            && board[location.row - 1][location.column - 1].occupiedBy.color == "black")
+                            possibleMoves.Add(new Location(location.row - 1, location.column - 1));
+                        // take right
+                        if (isValid(location.row - 1, location.column + 1)
+                            && board[location.row - 1][location.column + 1].occupiedBy != null
+                            && board[location.row - 1][location.column + 1].occupiedBy.color == "black")
+                            possibleMoves.Add(new Location(location.row - 1, location.column + 1));
+                        // En passant
+                        if (location.row == 3 && previousMove.piece == "Pawn" &&
+                            (previousMove.after.row - previousMove.before.row) == 2 &&
+                            Math.Abs(previousMove.after.column - location.column) == 1)
+                        {
+                            possibleMoves.Add(new Location(location.row - 1, previousMove.after.column));
+                        }
+                        break;
+                    }
+                #endregion
+                #region knight
+                case "Knight":
+                    if (isValid(location.row + 1, location.column - 2) &&
+                        (board[location.row + 1][location.column - 2].occupiedBy == null ||
+                        board[location.row + 1][location.column - 2].occupiedBy.color == enemyColor))
+                        possibleMoves.Add(new Location(location.row + 1, location.column - 2));
+                    if (isValid(location.row + 2, location.column - 1) &&
+                        (board[location.row + 2][location.column - 1].occupiedBy == null ||
+                        board[location.row + 2][location.column - 1].occupiedBy.color == enemyColor))
+                        possibleMoves.Add(new Location(location.row + 2, location.column - 1));
+                    if (isValid(location.row + 2, location.column + 1) &&
+                        (board[location.row + 2][location.column + 1].occupiedBy == null ||
+                        board[location.row + 2][location.column + 1].occupiedBy.color == enemyColor))
+                        possibleMoves.Add(new Location(location.row + 2, location.column + 1));
+                    if (isValid(location.row + 1, location.column + 2) &&
+                        (board[location.row + 1][location.column + 2].occupiedBy == null ||
+                        board[location.row + 1][location.column + 2].occupiedBy.color == enemyColor))
+                        possibleMoves.Add(new Location(location.row + 1, location.column + 2));
+                    if (isValid(location.row - 1, location.column - 2) &&
+                        (board[location.row - 1][location.column - 2].occupiedBy == null ||
+                        board[location.row - 1][location.column - 2].occupiedBy.color == enemyColor))
+                        possibleMoves.Add(new Location(location.row - 1, location.column - 2));
+                    if (isValid(location.row - 2, location.column - 1) &&
+                        (board[location.row - 2][location.column - 1].occupiedBy == null ||
+                        board[location.row - 2][location.column - 1].occupiedBy.color == enemyColor))
+                        possibleMoves.Add(new Location(location.row - 2, location.column - 1));
+                    if (isValid(location.row - 2, location.column + 1) &&
+                        (board[location.row - 2][location.column + 1].occupiedBy == null ||
+                        board[location.row - 2][location.column + 1].occupiedBy.color == enemyColor))
+                        possibleMoves.Add(new Location(location.row - 2, location.column + 1));
+                    if (isValid(location.row - 1, location.column + 2) &&
+                        (board[location.row - 1][location.column + 2].occupiedBy == null ||
+                        board[location.row - 1][location.column + 2].occupiedBy.color == enemyColor))
+                        possibleMoves.Add(new Location(location.row - 1, location.column + 2));
+                    break;
+                #endregion
+                default: break;
+            }
+            return possibleMoves;
+        }
+
+        private Location moveKing(int row, int column, string color)
         {
             string enemyColor = color == "white" ? "black" : "white";
+            Piece king = board[row][column].occupiedBy;
+            board[row][column].occupiedBy = null;
+            Location move = null;
 
-            if (isValid(row, column - 1)) if (isSafe(row, column - 1, enemyColor)) return new List<int>(2) { row, column - 1 };
-            if (isValid(row, column + 1)) if (isSafe(row, column + 1, enemyColor)) return new List<int>(2) { row, column + 1 };
-            if (isValid(row + 1, column - 1)) if (isSafe(row + 1, column - 1, enemyColor)) return new List<int>(2) { row + 1, column - 1 };
-            if (isValid(row + 1, column + 1)) if (isSafe(row + 1, column + 1, enemyColor)) return new List<int>(2) { row + 1, column + 1 };
-            if (isValid(row + 1, column)) if (isSafe(row + 1, column, enemyColor)) return new List<int>(2) { row + 1, column };
-            if (isValid(row - 1, column - 1)) if (isSafe(row - 1, column - 1, enemyColor)) return new List<int>(2) { row - 1, column - 1 };
-            if (isValid(row - 1, column + 1)) if (isSafe(row - 1, column + 1, enemyColor)) return new List<int>(2) { row - 1, column + 1 };
-            if (isValid(row - 1, column)) if (isSafe(row - 1, column, enemyColor)) return new List<int>(2) { row - 1, column };
+            if (isValidEmptyOrEnemy(row, column - 1, enemyColor)) if (isSafe(row, column - 1, enemyColor)) move = new Location(row, column - 1);
+            else if (isValidEmptyOrEnemy(row, column + 1, enemyColor)) if (isSafe(row, column + 1, enemyColor)) move = new Location(row, column + 1);
+            else if (isValidEmptyOrEnemy(row + 1, column - 1, enemyColor)) if (isSafe(row + 1, column - 1, enemyColor)) move = new Location(row + 1, column - 1);
+            else if (isValidEmptyOrEnemy(row + 1, column + 1, enemyColor)) if (isSafe(row + 1, column + 1, enemyColor)) move = new Location(row + 1, column + 1);
+            else if (isValidEmptyOrEnemy(row + 1, column, enemyColor)) if (isSafe(row + 1, column, enemyColor)) move = new Location(row + 1, column);
+            else if (isValidEmptyOrEnemy(row - 1, column - 1, enemyColor)) if (isSafe(row - 1, column - 1, enemyColor)) move = new Location(row - 1, column - 1);
+            else if (isValidEmptyOrEnemy(row - 1, column + 1, enemyColor)) if (isSafe(row - 1, column + 1, enemyColor)) move = new Location(row - 1, column + 1);
+            else if (isValidEmptyOrEnemy(row - 1, column, enemyColor)) if (isSafe(row - 1, column, enemyColor)) move = new Location(row - 1, column);
 
-            return null;
+            board[row][column].occupiedBy = king;
+            return move;
         }
 
         private bool isSafe(int r, int c, string enemyColor)
@@ -464,6 +906,11 @@ namespace EternalChess
             }
 
             return true;
+        }
+
+        private bool isValidEmptyOrEnemy(int r, int c, string enemyColor)
+        {
+            return isValid(r, c) && (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor);
         }
 
         private bool isValid(int r, int c)
