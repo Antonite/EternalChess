@@ -19,7 +19,6 @@ namespace EternalChess
             this.after = after;
             this.color = color;
             this.piece = piece;
-            this.causedCheck = causedCheck;
         }
     }
 }

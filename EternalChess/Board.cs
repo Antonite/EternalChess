@@ -5,33 +5,106 @@ namespace EternalChess
 {
     class Board
     {
-        List<List<Square>> board;
-        Move previousMove;
-        Square whiteKing;
-        Square blackKing;
-        bool whiteKingMoved = false;
-        bool blackKingMoved = false;
+        public List<List<Square>> board;
+        public Move previousMove;
+        public Square whiteKing;
+        public Square blackKing;
+        public bool whiteKingMoved = false;
+        public bool blackKingMoved = false;
 
         public Board()
         {
             initialize();
         }
 
-        public Move move(string color)
+        public List<Move> findAllMoves(string color)
         {
             string enemyColor = color == "white" ? "black" : "white";
             Square currentKing = color == "white" ? whiteKing : blackKing;
-            Move move = null;
-            Location locationOfMove = null;
-            bool isChecked = isSafe(currentKing.row, currentKing.column, enemyColor);
+            List<Move> moves = new List<Move>();
+            List<Location> locationsOfMove = new List<Location>();
+            bool isChecked = !isSafe(currentKing.row, currentKing.column, enemyColor);
             if (isChecked)
             {
-                locationOfMove = kingEscape(color, enemyColor);
-                move = new Move(new Location(currentKing.row, currentKing.column), locationOfMove, "King", color);
-                return move;
+                locationsOfMove = kingEscape(color, enemyColor);
+                moves = convertLocationsToMoves(new Location(currentKing.row, currentKing.column), locationsOfMove, "King", color);
+                return moves;
+            }
+            else
+            {
+                // all possible moves
+                foreach (List<Square> rows in board)
+                {
+                    foreach (Square square in rows)
+                    {
+                        if (square.occupiedBy == null) continue;
+                        else if (square.occupiedBy.color == color)
+                        {
+                            Location currentLocation = new Location(square.row, square.column);
+                            if(square.occupiedBy.type == "King") moves.AddRange(possibleKingMoves(currentLocation, color, enemyColor));
+                            else
+                            {
+                                locationsOfMove = findPossibleMoves(currentLocation, color, enemyColor);
+                                moves.AddRange(convertLocationsToMoves(currentLocation, locationsOfMove, square.occupiedBy.type, color));
+                            }
+                        }
+                    }
+                }
+                // possible moves
+                moves = verifyMoves(moves, enemyColor, currentKing);
             }
 
-            return null;
+            return moves;
+        }
+
+        private List<Move> verifyMoves(List<Move> moves, string enemyColor, Square currentKing)
+        {
+            List<Move> verifiedMoves = new List<Move>();
+            foreach(Move move in moves)
+            {
+                #region king
+                // castling short
+                if (move.piece == "King" && move.after.column - move.before.column == 2)
+                {
+                    board[move.after.row][6].occupiedBy = board[move.before.row][4].occupiedBy;
+                    board[move.after.row][5].occupiedBy = board[move.before.row][7].occupiedBy;
+                    board[move.after.row][4].occupiedBy = null;
+                    board[move.after.row][7].occupiedBy = null;
+                    if (isSafe(move.after.row, 6, enemyColor)) verifiedMoves.Add(move);
+                    board[move.after.row][4].occupiedBy = board[move.after.row][6].occupiedBy;
+                    board[move.after.row][7].occupiedBy = board[move.after.row][5].occupiedBy;
+                    board[move.after.row][6].occupiedBy = null;
+                    board[move.after.row][5].occupiedBy = null;
+                }
+                // castling long
+                else if (move.piece == "King" && move.after.column - move.before.column == -2)
+                {
+                    board[move.after.row][2].occupiedBy = board[move.before.row][4].occupiedBy;
+                    board[move.after.row][3].occupiedBy = board[move.before.row][0].occupiedBy;
+                    board[move.after.row][4].occupiedBy = null;
+                    board[move.after.row][0].occupiedBy = null;
+                    if (isSafe(move.after.row, 2, enemyColor)) verifiedMoves.Add(move);
+                    board[move.after.row][4].occupiedBy = board[move.after.row][2].occupiedBy;
+                    board[move.after.row][0].occupiedBy = board[move.after.row][3].occupiedBy;
+                    board[move.after.row][2].occupiedBy = null;
+                    board[move.after.row][3].occupiedBy = null;
+                }
+                else if (move.piece == "King")
+                {
+                    verifiedMoves.Add(move);
+                }
+                #endregion
+                else
+                {
+                    Piece takenPiece = board[move.after.row][move.after.column].occupiedBy;
+                    board[move.after.row][move.after.column].occupiedBy = new Piece(move.piece, move.color);
+                    board[move.before.row][move.before.column].occupiedBy = null;
+                    if (isSafe(currentKing.row, currentKing.column, enemyColor)) verifiedMoves.Add(move);
+                    board[move.before.row][move.before.column].occupiedBy = board[move.after.row][move.after.column].occupiedBy;
+                    board[move.after.row][move.after.column].occupiedBy = null;
+                }
+            }
+            return verifiedMoves;
         }
         
         private List<Square> calculateCheckers(string color)
@@ -363,12 +436,12 @@ namespace EternalChess
             return attackers;
         }
 
-        private Location kingEscape(string color, string enemyColor)
+        private List<Location> kingEscape(string color, string enemyColor)
         {
             Square currentKing = color == "white" ? whiteKing : blackKing;
             List<Square> attackers = calculateCheckers(color);
-            if(attackers.Count == 2) return moveKing(currentKing.row, currentKing.column, color);
-            else
+            List<Location> possibleEscapeMoves = moveKing(currentKing.row, currentKing.column, color);
+            if (attackers.Count == 1)
             {
                 #region Find possible cover squares
                 List<Location> possibleCoverSquares = new List<Location>();
@@ -536,7 +609,6 @@ namespace EternalChess
 
                 #endregion
                 #region Try cover the king
-                if (possibleCoverSquares.Count == 0) return moveKing(currentKing.row, currentKing.column, color);
                 foreach(List<Square> rows in board)
                 {
                     foreach (Square square in rows)
@@ -555,7 +627,7 @@ namespace EternalChess
                                     bool isMoveSafe = isSafe(currentKing.row, currentKing.column, enemyColor);
                                     square.occupiedBy = board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy;
                                     board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy = takenPiece;
-                                    if (isMoveSafe) return possibleCoverMove;
+                                    if (isMoveSafe) possibleEscapeMoves.Add(possibleCoverMove);
                                 }
                             }
                         }
@@ -563,7 +635,22 @@ namespace EternalChess
                 }
                 #endregion
             }
-            return moveKing(currentKing.row, currentKing.column, color);
+            return possibleEscapeMoves;
+        }
+
+        private Move convertLocationToMove(Location locationBefore, Location locationAfter, string type, string color)
+        {
+            return new Move(locationBefore, locationAfter, type, color);
+        }
+
+        private List<Move> convertLocationsToMoves(Location locationBefore, List<Location> locationsAfter, string type, string color)
+        {
+            List<Move> moves = new List<Move>();
+            foreach (Location loc in locationsAfter)
+            {
+                moves.Add(convertLocationToMove(locationBefore, loc, type, color));
+            }
+            return moves;
         }
 
         private List<Location> findPossibleMoves(Location location, string color, string enemyColor)
@@ -716,7 +803,7 @@ namespace EternalChess
                         if (location.row == 6 && isValid(location.row - 2, location.column) && board[location.row - 2][location.column].occupiedBy == null)
                             possibleMoves.Add(new Location(location.row - 2, location.column));
                         // move 1
-                        if (isValid(location.row - 1, location.column) && board[location.row + 1][location.column].occupiedBy == null)
+                        if (isValid(location.row - 1, location.column) && board[location.row - 1][location.column].occupiedBy == null)
                             possibleMoves.Add(new Location(location.row - 1, location.column));
                         // take left
                         if (isValid(location.row - 1, location.column - 1)
@@ -779,24 +866,56 @@ namespace EternalChess
             return possibleMoves;
         }
 
-        private Location moveKing(int row, int column, string color)
+        private List<Location> moveKing(int row, int column, string color)
         {
             string enemyColor = color == "white" ? "black" : "white";
             Piece king = board[row][column].occupiedBy;
             board[row][column].occupiedBy = null;
-            Location move = null;
+            List<Location> moves = new List<Location>();
 
-            if (isValidEmptyOrEnemy(row, column - 1, enemyColor)) if (isSafe(row, column - 1, enemyColor)) move = new Location(row, column - 1);
-            else if (isValidEmptyOrEnemy(row, column + 1, enemyColor)) if (isSafe(row, column + 1, enemyColor)) move = new Location(row, column + 1);
-            else if (isValidEmptyOrEnemy(row + 1, column - 1, enemyColor)) if (isSafe(row + 1, column - 1, enemyColor)) move = new Location(row + 1, column - 1);
-            else if (isValidEmptyOrEnemy(row + 1, column + 1, enemyColor)) if (isSafe(row + 1, column + 1, enemyColor)) move = new Location(row + 1, column + 1);
-            else if (isValidEmptyOrEnemy(row + 1, column, enemyColor)) if (isSafe(row + 1, column, enemyColor)) move = new Location(row + 1, column);
-            else if (isValidEmptyOrEnemy(row - 1, column - 1, enemyColor)) if (isSafe(row - 1, column - 1, enemyColor)) move = new Location(row - 1, column - 1);
-            else if (isValidEmptyOrEnemy(row - 1, column + 1, enemyColor)) if (isSafe(row - 1, column + 1, enemyColor)) move = new Location(row - 1, column + 1);
-            else if (isValidEmptyOrEnemy(row - 1, column, enemyColor)) if (isSafe(row - 1, column, enemyColor)) move = new Location(row - 1, column);
+            if (isValidEmptyOrEnemy(row, column - 1, enemyColor)) if (isSafe(row, column - 1, enemyColor)) moves.Add(new Location(row, column - 1));
+            if (isValidEmptyOrEnemy(row, column + 1, enemyColor)) if (isSafe(row, column + 1, enemyColor)) moves.Add(new Location(row, column + 1));
+            if (isValidEmptyOrEnemy(row + 1, column - 1, enemyColor)) if (isSafe(row + 1, column - 1, enemyColor)) moves.Add(new Location(row + 1, column - 1));
+            if (isValidEmptyOrEnemy(row + 1, column + 1, enemyColor)) if (isSafe(row + 1, column + 1, enemyColor)) moves.Add(new Location(row + 1, column + 1));
+            if (isValidEmptyOrEnemy(row + 1, column, enemyColor)) if (isSafe(row + 1, column, enemyColor)) moves.Add(new Location(row + 1, column));
+            if (isValidEmptyOrEnemy(row - 1, column - 1, enemyColor)) if (isSafe(row - 1, column - 1, enemyColor)) moves.Add(new Location(row - 1, column - 1));
+            if (isValidEmptyOrEnemy(row - 1, column + 1, enemyColor)) if (isSafe(row - 1, column + 1, enemyColor)) moves.Add(new Location(row - 1, column + 1));
+            if (isValidEmptyOrEnemy(row - 1, column, enemyColor)) if (isSafe(row - 1, column, enemyColor)) moves.Add(new Location(row - 1, column));
 
             board[row][column].occupiedBy = king;
-            return move;
+            return moves;
+        }
+
+        private List<Move> possibleKingMoves(Location location, string color, string enemyColor)
+        {
+            bool hasKingMoved = color == "white" ? whiteKingMoved : blackKingMoved;
+            Square currentKing = color == "white" ? whiteKing : blackKing;
+            List<Move> possibleMoves = new List<Move>();
+            if (!hasKingMoved)
+            {
+                // castle short
+                if(board[currentKing.row][5].occupiedBy == null && 
+                    board[currentKing.row][6].occupiedBy == null &&
+                    board[currentKing.row][7].occupiedBy != null &&
+                    board[currentKing.row][7].occupiedBy.type == "Rook" &&
+                    board[currentKing.row][7].occupiedBy.color == color)
+                {
+                    possibleMoves.Add(new Move(new Location(currentKing.row, 4),
+                                                new Location(currentKing.row, 6), color, "King"));
+                }
+                if (board[currentKing.row][3].occupiedBy == null &&
+                    board[currentKing.row][2].occupiedBy == null &&
+                    board[currentKing.row][1].occupiedBy == null &&
+                    board[currentKing.row][0].occupiedBy != null &&
+                    board[currentKing.row][0].occupiedBy.type == "Rook" &&
+                    board[currentKing.row][0].occupiedBy.color == color)
+                {
+                    possibleMoves.Add(new Move(new Location(currentKing.row, 4),
+                                                new Location(currentKing.row, 2), color, "King"));
+                }
+            }
+            possibleMoves.AddRange(convertLocationsToMoves(location, moveKing(location.row, location.column, color), "King", color));
+            return possibleMoves;
         }
 
         private bool isSafe(int r, int c, string enemyColor)
