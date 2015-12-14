@@ -12,14 +12,8 @@ namespace EternalChess
         {
             Console.WriteLine("Starting EternalTree");
 
-            Board board = new Board();
-            EternalTree eternalTree = new EternalTree();
-
-
-            //eternalTree.populateResponses(board.findAllMoves("black"));
-
-
-            Console.Read();
+            GameEngine engine = new GameEngine();
+            engine.run();
         }
     }
 }

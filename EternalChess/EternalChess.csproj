@@ -43,8 +43,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Board.cs" />
+    <Compile Include="ChessBoard.cs" />
     <Compile Include="EternalTree.cs" />
+    <Compile Include="GameEngine.cs" />
     <Compile Include="Location.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="Piece.cs" />

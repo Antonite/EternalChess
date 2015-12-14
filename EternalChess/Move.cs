@@ -12,6 +12,7 @@ namespace EternalChess
         public Location after;
         public string color;
         public string piece;
+        public string stringMove;
 
         public Move(Location before, Location after, string color, string piece)
         {
@@ -19,6 +20,12 @@ namespace EternalChess
             this.after = after;
             this.color = color;
             this.piece = piece;
+            stringMove = toString();
+        }
+
+        public string toString()
+        {
+            return color + " " + piece + " from " + before.row + "," + before.column + " to " + after.row + "," + after.column;
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace EternalChess
 {
-    class Board
+    class ChessBoard
     {
         public List<List<Square>> board;
         public Move previousMove;
@@ -11,8 +11,12 @@ namespace EternalChess
         public Square blackKing;
         public bool whiteKingMoved = false;
         public bool blackKingMoved = false;
+        public bool whiteRightRookMoved = false;
+        public bool whiteLeftRookMoved = false;
+        public bool blackRightRookMoved = false;
+        public bool blackLeftRookMoved = false;
 
-        public Board()
+        public ChessBoard()
         {
             initialize();
         }
@@ -97,7 +101,7 @@ namespace EternalChess
                 else
                 {
                     Piece takenPiece = board[move.after.row][move.after.column].occupiedBy;
-                    board[move.after.row][move.after.column].occupiedBy = new Piece(move.piece, move.color);
+                    board[move.after.row][move.after.column].occupiedBy = board[move.before.row][move.before.column].occupiedBy;
                     board[move.before.row][move.before.column].occupiedBy = null;
                     if (isSafe(currentKing.row, currentKing.column, enemyColor)) verifiedMoves.Add(move);
                     board[move.before.row][move.before.column].occupiedBy = board[move.after.row][move.after.column].occupiedBy;
@@ -640,7 +644,7 @@ namespace EternalChess
 
         private Move convertLocationToMove(Location locationBefore, Location locationAfter, string type, string color)
         {
-            return new Move(locationBefore, locationAfter, type, color);
+            return new Move(locationBefore, locationAfter, color, type);
         }
 
         private List<Move> convertLocationsToMoves(Location locationBefore, List<Location> locationsAfter, string type, string color)
@@ -772,12 +776,14 @@ namespace EternalChess
                     // can move 2 spaces
                     if(color == "white")
                     {
-                        // move 2
-                        if (location.row == 1 && isValid(location.row + 2, location.column) && board[location.row + 2][location.column].occupiedBy == null)
-                            possibleMoves.Add(new Location(location.row + 2, location.column));
                         // move 1
                         if (isValid(location.row + 1, location.column) && board[location.row + 1][location.column].occupiedBy == null)
+                        {
                             possibleMoves.Add(new Location(location.row + 1, location.column));
+                            // move 2
+                            if (location.row == 1 && isValid(location.row + 2, location.column) && board[location.row + 2][location.column].occupiedBy == null)
+                                possibleMoves.Add(new Location(location.row + 2, location.column));
+                        }
                         // take left
                         if (isValid(location.row + 1, location.column - 1) 
                             && board[location.row + 1][location.column - 1].occupiedBy != null
@@ -799,12 +805,14 @@ namespace EternalChess
                     }
                     else
                     {
-                        // move 2
-                        if (location.row == 6 && isValid(location.row - 2, location.column) && board[location.row - 2][location.column].occupiedBy == null)
-                            possibleMoves.Add(new Location(location.row - 2, location.column));
                         // move 1
                         if (isValid(location.row - 1, location.column) && board[location.row - 1][location.column].occupiedBy == null)
+                        {
                             possibleMoves.Add(new Location(location.row - 1, location.column));
+                            // move 2
+                            if (location.row == 6 && isValid(location.row - 2, location.column) && board[location.row - 2][location.column].occupiedBy == null)
+                                possibleMoves.Add(new Location(location.row - 2, location.column));
+                        }
                         // take left
                         if (isValid(location.row - 1, location.column - 1)
                             && board[location.row - 1][location.column - 1].occupiedBy != null
@@ -889,28 +897,32 @@ namespace EternalChess
         private List<Move> possibleKingMoves(Location location, string color, string enemyColor)
         {
             bool hasKingMoved = color == "white" ? whiteKingMoved : blackKingMoved;
+            bool haveLeftRooksMoved = color == "white" ? whiteLeftRookMoved : blackLeftRookMoved;
+            bool haveRightRooksMoved = color == "white" ? whiteRightRookMoved : blackRightRookMoved;
             Square currentKing = color == "white" ? whiteKing : blackKing;
             List<Move> possibleMoves = new List<Move>();
             if (!hasKingMoved)
             {
                 // castle short
-                if(board[currentKing.row][5].occupiedBy == null && 
+                if(!haveRightRooksMoved && board[currentKing.row][5].occupiedBy == null && 
                     board[currentKing.row][6].occupiedBy == null &&
                     board[currentKing.row][7].occupiedBy != null &&
                     board[currentKing.row][7].occupiedBy.type == "Rook" &&
                     board[currentKing.row][7].occupiedBy.color == color)
                 {
-                    possibleMoves.Add(new Move(new Location(currentKing.row, 4),
-                                                new Location(currentKing.row, 6), color, "King"));
+                    if (isSafe(currentKing.row, 5, enemyColor) && isSafe(currentKing.row, 6, enemyColor))
+                        possibleMoves.Add(new Move(new Location(currentKing.row, 4),
+                                                    new Location(currentKing.row, 6), color, "King"));
                 }
-                if (board[currentKing.row][3].occupiedBy == null &&
+                if (!haveLeftRooksMoved && board[currentKing.row][3].occupiedBy == null &&
                     board[currentKing.row][2].occupiedBy == null &&
                     board[currentKing.row][1].occupiedBy == null &&
                     board[currentKing.row][0].occupiedBy != null &&
                     board[currentKing.row][0].occupiedBy.type == "Rook" &&
                     board[currentKing.row][0].occupiedBy.color == color)
                 {
-                    possibleMoves.Add(new Move(new Location(currentKing.row, 4),
+                    if (isSafe(currentKing.row, 3, enemyColor) && isSafe(currentKing.row, 2, enemyColor))
+                        possibleMoves.Add(new Move(new Location(currentKing.row, 4),
                                                 new Location(currentKing.row, 2), color, "King"));
                 }
             }
@@ -1077,6 +1089,8 @@ namespace EternalChess
 
             board = new List<List<Square>>(8);
 
+            previousMove = new Move(new Location(0, 0), new Location(0, 0), "default", "default");
+
             for (var i = 0; i < 8; i++)
             {
                 List<Square> row = new List<Square>(8);
@@ -1146,6 +1160,55 @@ namespace EternalChess
                 board[4][i] = new Square(4, i, null);
                 board[5][i] = new Square(5, i, null);
             }
+        }
+
+        public void performMove(Move move)
+        {
+            #region king
+            // castling short
+            if (move.piece == "King" && move.after.column - move.before.column == 2)
+            {
+                board[move.after.row][6].occupiedBy = board[move.before.row][4].occupiedBy;
+                board[move.after.row][5].occupiedBy = board[move.before.row][7].occupiedBy;
+                board[move.after.row][4].occupiedBy = null;
+                board[move.after.row][7].occupiedBy = null;
+            }
+            // castling long
+            else if (move.piece == "King" && move.after.column - move.before.column == -2)
+            {
+                board[move.after.row][2].occupiedBy = board[move.before.row][4].occupiedBy;
+                board[move.after.row][3].occupiedBy = board[move.before.row][0].occupiedBy;
+                board[move.after.row][4].occupiedBy = null;
+                board[move.after.row][0].occupiedBy = null;
+            }
+            #endregion
+            else
+            {
+                board[move.after.row][move.after.column].occupiedBy = board[move.before.row][move.before.column].occupiedBy;
+                board[move.before.row][move.before.column].occupiedBy = null;
+            }
+
+            if (move.piece == "King" && move.color == "white")
+            {
+                whiteKing = board[move.after.row][move.after.column];
+                whiteKingMoved = true;
+            }
+            if (move.piece == "Rook" && move.color == "white")
+            {
+                if (move.before.column == 0) whiteLeftRookMoved = true;
+                if (move.before.column == 7) whiteRightRookMoved = true;
+            }
+            if (move.piece == "King" && move.color == "black")
+            {
+                blackKing = board[move.after.row][move.after.column];
+                blackKingMoved = true;
+            }
+            if (move.piece == "Rook" && move.color == "black")
+            {
+                if (move.before.column == 0) blackLeftRookMoved = true;
+                if (move.before.column == 7) blackRightRookMoved = true;
+            }
+            previousMove = move;
         }
     }
 }

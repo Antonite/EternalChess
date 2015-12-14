@@ -8,9 +8,9 @@ namespace EternalChess
 {
     class EternalTree
     {
-        public long wins;
-        public long losses;
-        public long winChance;
+        public double wins;
+        public double losses;
+        public double winChance;
         public Move move;
         public List<EternalTree> responses;
 
@@ -31,6 +31,30 @@ namespace EternalChess
             losses = 0;
             winChance = 100;
             initialize();
+        }
+
+        public void populateResponses(List<Move> moves)
+        {
+            responses = new List<EternalTree>();
+            foreach (Move move in moves)
+            {
+                responses.Add(new EternalTree(move, null));
+            }
+        }
+
+        public int bestResponse()
+        {
+            double bestWinChance = responses[0].winChance;
+            int currentWinner = 0;
+            for(int i = 1; i<responses.Count; i++)
+            {
+                if(responses[i].winChance > bestWinChance)
+                {
+                    bestWinChance = responses[i].winChance;
+                    currentWinner = i;
+                }
+            }
+            return currentWinner;
         }
 
         private void initialize()
@@ -55,15 +79,15 @@ namespace EternalChess
             responses.Add(new EternalTree(new Move(new Location(1, 7), new Location(2, 7), "white", "Pawn"), null));
             responses.Add(new EternalTree(new Move(new Location(0, 1), new Location(2, 2), "white", "Knight"), null));
             responses.Add(new EternalTree(new Move(new Location(0, 6), new Location(2, 5), "white", "Knight"), null));
-            responses.Add(new EternalTree(new Move(new Location(7, 1), new Location(5, 2), "black", "Knight"), null));
-            responses.Add(new EternalTree(new Move(new Location(7, 6), new Location(5, 5), "black", "Knight"), null));
+            responses.Add(new EternalTree(new Move(new Location(0, 1), new Location(0, 2), "white", "Knight"), null));
+            responses.Add(new EternalTree(new Move(new Location(0, 6), new Location(2, 7), "white", "Knight"), null));
 
             this.responses = responses;
         }
 
-        private void updateWinChance()
+        public void updateWinChance()
         {
-            winChance = wins / losses;
+            winChance = wins / (wins + losses);
         }
 
         private void killNode()
@@ -73,13 +97,6 @@ namespace EternalChess
             losses = 1;
         }
 
-        public void populateResponses(List<Move> moves)
-        {
-            responses = new List<EternalTree>();
-            foreach (Move move in moves)
-            {
-                responses.Add(new EternalTree(move, null));
-            }
-        }
+        
     }
 }
