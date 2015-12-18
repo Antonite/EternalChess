@@ -8,6 +8,7 @@ namespace EternalChess
     {
         public ChessBoard chessBoard;
         public EternalTree eternalTree;
+        public List<Move> setupMoves;
 
         public GameEngine()
         {
@@ -17,6 +18,19 @@ namespace EternalChess
         private void initialize()
         {
             eternalTree = new EternalTree();
+            setupMoves = new List<Move>();
+            Console.WriteLine("Please input setup moves ('done' to continue)>  <int>[from row], <int>[from column]," +
+                    "<int>[to row], <int>[to column], <string>[piece color], <string>[piece type]");
+            char[] delimiterChars = { ',', ' ' };
+            while (true)
+            {
+                string moveString = Console.ReadLine();
+                if (moveString == "done") break;
+                string[] moveParams = moveString.Split(delimiterChars);
+                setupMoves.Add(new Move(new Location(int.Parse(moveParams[0]), int.Parse(moveParams[1])),
+                                        new Location(int.Parse(moveParams[2]), int.Parse(moveParams[3])),
+                                        moveParams[4].ToLower(), moveParams[5]));
+            }
         }
 
         public void run()
@@ -33,6 +47,22 @@ namespace EternalChess
             chessBoard = new ChessBoard();
             List<string> passedNodes = new List<string>();
             string colorToMove = "white";
+
+            //perform setup moves
+            foreach(Move move in setupMoves)
+            {
+                if (currentTree.responses == null) currentTree.populateResponses(chessBoard.findAllMoves(colorToMove));
+                
+
+                string currentMove = move.stringMove;
+                Console.WriteLine(currentMove);
+
+                //perform move
+                chessBoard.performMove(move);
+                passedNodes.Add(currentMove);
+                colorToMove = colorToMove == "white" ? "black" : "white";
+                currentTree = currentTree.responses[FindResponse(move, ref currentTree.responses)];
+            }
 
             while (true)
             {
@@ -62,6 +92,19 @@ namespace EternalChess
                     break;
                 }
             }
+        }
+
+        private int FindResponse(Move move, ref List<EternalTree> responses)
+        {
+            for(int i = 0; i<responses.Count; i++)
+            {
+                if(responses[i].move.stringMove.Equals(move.stringMove))
+                {
+                    return i;
+                }
+            }
+            Console.Write("Error identifying setup respose.");
+            return 0;
         }
 
         private bool isRepeat3Times(List<string> nodes)
@@ -128,7 +171,7 @@ namespace EternalChess
                         tree.responses[i].losses += tree.responses[i].move.color == winnerColor ? 0 : 1;
                         passedNodes.RemoveAt(0);
                         EternalTree updatedTree = tree.responses[i];
-                        tieGame(ref updatedTree, passedNodes);
+                        winGame(ref updatedTree, passedNodes, winnerColor);
                         tree.responses[i] = updatedTree;
                         break;
                     }
