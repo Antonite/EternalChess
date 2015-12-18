@@ -105,7 +105,7 @@ namespace EternalChess
                     board[move.before.row][move.before.column].occupiedBy = null;
                     if (isSafe(currentKing.row, currentKing.column, enemyColor)) verifiedMoves.Add(move);
                     board[move.before.row][move.before.column].occupiedBy = board[move.after.row][move.after.column].occupiedBy;
-                    board[move.after.row][move.after.column].occupiedBy = null;
+                    board[move.after.row][move.after.column].occupiedBy = takenPiece;
                 }
             }
             return verifiedMoves;
@@ -816,12 +816,12 @@ namespace EternalChess
                         // take left
                         if (isValid(location.row - 1, location.column - 1)
                             && board[location.row - 1][location.column - 1].occupiedBy != null
-                            && board[location.row - 1][location.column - 1].occupiedBy.color == "black")
+                            && board[location.row - 1][location.column - 1].occupiedBy.color == "white")
                             possibleMoves.Add(new Location(location.row - 1, location.column - 1));
                         // take right
                         if (isValid(location.row - 1, location.column + 1)
                             && board[location.row - 1][location.column + 1].occupiedBy != null
-                            && board[location.row - 1][location.column + 1].occupiedBy.color == "black")
+                            && board[location.row - 1][location.column + 1].occupiedBy.color == "white")
                             possibleMoves.Add(new Location(location.row - 1, location.column + 1));
                         // En passant
                         if (location.row == 3 && previousMove.piece == "Pawn" &&
@@ -965,7 +965,7 @@ namespace EternalChess
             }
 
             //check horizontally left
-            for(int i = c; i >= 0; i--)
+            for(int i = c - 1; i >= 0; i--)
             {
                 if (board[r][i].occupiedBy == null) continue;
                 if (board[r][i].occupiedBy.color != enemyColor) break;
@@ -974,7 +974,7 @@ namespace EternalChess
             }
 
             //check horizontally right
-            for (int i = c; i <= 7; i++)
+            for (int i = c + 1; i <= 7; i++)
             {
                 if (board[r][i].occupiedBy == null) continue;
                 if (board[r][i].occupiedBy.color != enemyColor) break;
@@ -983,56 +983,56 @@ namespace EternalChess
             }
 
             //check vertically up
-            for (int i = r; i <= 7; i++)
+            for (int i = r + 1; i <= 7; i++)
             {
-                if (board[r][i].occupiedBy == null) continue;
-                if (board[r][i].occupiedBy.color != enemyColor) break;
+                if (board[i][c].occupiedBy == null) continue;
+                if (board[i][c].occupiedBy.color != enemyColor) break;
                 if (isEnemyQueenRock(r, i, enemyColor)) return false;
                 else break;
             }
 
             //check vertically down
-            for (int i = r; i >= 0; i--)
+            for (int i = r - 1; i >= 0; i--)
             {
-                if (board[r][i].occupiedBy == null) continue;
-                if (board[r][i].occupiedBy.color != enemyColor) break;
+                if (board[i][c].occupiedBy == null) continue;
+                if (board[i][c].occupiedBy.color != enemyColor) break;
                 if (isEnemyQueenRock(r, i, enemyColor)) return false;
                 else break;
             }
 
             //check diagonally left up
-            for (int i = r, n = c; i <= 7 && n >= 0; i++, n--)
+            for (int i = r + 1, n = c - 1; i <= 7 && n >= 0; i++, n--)
             {
-                if (board[r][i].occupiedBy == null) continue;
-                if (board[r][i].occupiedBy.color != enemyColor) break;
-                if (isEnemyQueenBishop(r, i, enemyColor)) return false;
+                if (board[i][n].occupiedBy == null) continue;
+                if (board[i][n].occupiedBy.color != enemyColor) break;
+                if (isEnemyQueenBishop(i, n, enemyColor)) return false;
                 else break;
             }
 
             //check diagonally left down
-            for (int i = r, n = c; i >= 0 && n >= 0; i--, n--)
+            for (int i = r - 1, n = c - 1; i >= 0 && n >= 0; i--, n--)
             {
-                if (board[r][i].occupiedBy == null) continue;
-                if (board[r][i].occupiedBy.color != enemyColor) break;
-                if (isEnemyQueenBishop(r, i, enemyColor)) return false;
+                if (board[i][n].occupiedBy == null) continue;
+                if (board[i][n].occupiedBy.color != enemyColor) break;
+                if (isEnemyQueenBishop(i, n, enemyColor)) return false;
                 else break;
             }
 
             //check diagonally right up
-            for (int i = r, n = c; i <= 7 && n <= 7; i++, n++)
+            for (int i = r + 1, n = c + 1; i <= 7 && n <= 7; i++, n++)
             {
-                if (board[r][i].occupiedBy == null) continue;
-                if (board[r][i].occupiedBy.color != enemyColor) break;
-                if (isEnemyQueenBishop(r, i, enemyColor)) return false;
+                if (board[i][n].occupiedBy == null) continue;
+                if (board[i][n].occupiedBy.color != enemyColor) break;
+                if (isEnemyQueenBishop(i, n, enemyColor)) return false;
                 else break;
             }
 
             //check diagonally right down
-            for (int i = r, n = c; i >= 0 && n <= 7; i--, n++)
+            for (int i = r - 1, n = c + 1; i >= 0 && n <= 7; i--, n++)
             {
-                if (board[r][i].occupiedBy == null) continue;
-                if (board[r][i].occupiedBy.color != enemyColor) break;
-                if (isEnemyQueenBishop(r, i, enemyColor)) return false;
+                if (board[i][n].occupiedBy == null) continue;
+                if (board[i][n].occupiedBy.color != enemyColor) break;
+                if (isEnemyQueenBishop(i, n, enemyColor)) return false;
                 else break;
             }
 

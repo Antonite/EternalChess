@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace EternalChess
 {
@@ -10,7 +6,6 @@ namespace EternalChess
     {
         public double wins;
         public double losses;
-        public double winChance;
         public Move move;
         public List<EternalTree> responses;
 
@@ -20,7 +15,6 @@ namespace EternalChess
             this.responses = responses;
             wins = 1;
             losses = 0;
-            winChance = 100;
         }
 
         public EternalTree()
@@ -29,7 +23,6 @@ namespace EternalChess
             this.responses = null;
             wins = 1;
             losses = 0;
-            winChance = 100;
             initialize();
         }
 
@@ -44,13 +37,14 @@ namespace EternalChess
 
         public int bestResponse()
         {
-            double bestWinChance = responses[0].winChance;
+            double bestWinChance = responses[0].getWinChance();
             int currentWinner = 0;
             for(int i = 1; i<responses.Count; i++)
             {
-                if(responses[i].winChance > bestWinChance)
+                double winChance = responses[i].getWinChance();
+                if (winChance > bestWinChance)
                 {
-                    bestWinChance = responses[i].winChance;
+                    bestWinChance = winChance;
                     currentWinner = i;
                 }
             }
@@ -85,15 +79,14 @@ namespace EternalChess
             this.responses = responses;
         }
 
-        public void updateWinChance()
+        public double getWinChance()
         {
-            winChance = wins / (wins + losses);
+            return wins / (wins + losses);
         }
 
         private void killNode()
         {
             wins = 0;
-            winChance = 0;
             losses = 1;
         }
 
