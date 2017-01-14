@@ -25,9 +25,9 @@ namespace EternalChess
 
         public Move GetMoveFromString(string move)
         {
-            var columnBefore = letterToColumn(move.ElementAt(0));
+            var columnBefore = Utils.LetterToColumn(move.ElementAt(0));
             var rowBefore = (move.ElementAt(1) - '0') - 1;
-            var columnAfter = letterToColumn(move.ElementAt(2));
+            var columnAfter = Utils.LetterToColumn(move.ElementAt(2));
             var rowAfter = (move.ElementAt(3) - '0') - 1;
 
             var squareBefore = board[rowBefore][columnBefore];
@@ -54,22 +54,6 @@ namespace EternalChess
                 case 'k': return "Knight";
                 case 'b': return "Bishop";
                 default: return "Error in pawn promition";
-            }
-        }
-
-        private int letterToColumn(char letter)
-        {
-            switch (letter)
-            {
-                case 'a': return 0;
-                case 'b': return 1;
-                case 'c': return 2;
-                case 'd': return 3;
-                case 'e': return 4;
-                case 'f': return 5;
-                case 'g': return 6;
-                case 'h': return 7;
-                default: return 0;
             }
         }
 
@@ -1395,6 +1379,61 @@ namespace EternalChess
                 }
                 output += "\n";
             }
+            return output;
+        }
+
+        public string ToFen(string colorToMove)
+        {
+            var output = "";
+
+            // board position
+            for (var i = 7; i <= 0; i--)
+            {
+                var emptySquares = 0;
+                foreach (var square in board[i])
+                {
+                    if (square.occupiedBy == null)
+                    {
+                        emptySquares++;
+                        continue;
+                    }
+
+                    var piece = square.occupiedBy.type.Equals("Knight") ? "N" : square.occupiedBy.type.ElementAt(0).ToString();
+                    if (square.occupiedBy.color.Equals("black")) piece = piece.ToLower();
+                    output += emptySquares + piece;
+                    emptySquares = 0;
+                }
+                output += "/";
+            }
+
+            // color to move
+            output = output.Remove(output.Length - 1);
+            output += " " + colorToMove.ElementAt(0) + " ";
+
+            // white can castle short
+            if (!whiteKingMoved && !whiteRightRookMoved) output += "K";
+            // white can castle long
+            if (!whiteKingMoved && !whiteLeftRookMoved) output += "Q";
+            // black can castle short
+            if (!blackKingMoved && !blackRightRookMoved) output += "k";
+            // black can castle long
+            if (!blackKingMoved && !blackLeftRookMoved) output += "q";
+
+            // En passant
+            var enpassant = "-";
+            if (previousMove != null && previousMove.piece.Equals("Pawn") && 
+                (previousMove.before.row == 6 || previousMove.before.row == 1) &&
+                Math.Abs(previousMove.before.column - previousMove.after.column) == 2)
+            {
+                var column = Utils.ColumnToLetter(previousMove.before.column);
+                var row = previousMove.after.column + (previousMove.before.column - previousMove.after.column)/2 + 1;
+                enpassant = column + row;
+            }
+            output += " " + enpassant + " ";
+
+            // todo corrent move counters
+            output += "0 0";
+
             return output;
         }
     }

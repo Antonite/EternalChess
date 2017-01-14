@@ -10,7 +10,6 @@ namespace EternalChess
     class AIEngine
     {
         public ChessBoard chessBoard;
-//        public EternalTree eternalTree;
 
         public AIEngine()
         {
@@ -19,7 +18,7 @@ namespace EternalChess
 
         private void initialize()
         {
-//            eternalTree = new EternalTree();
+
         }
 
         public void run()
@@ -33,7 +32,6 @@ namespace EternalChess
         private void runSingleGame()
         {
             // ?chessBoard.ToString(),nq
-            //            EternalTree currentTree = eternalTree;
             chessBoard = new ChessBoard();
             List<string> passedNodes = new List<string>();
             string colorToMove = "white";
@@ -47,8 +45,21 @@ namespace EternalChess
 
             while (true)
             {
-//                if (currentTree.responses == null) currentTree.populateResponses(chessBoard.findAllMoves(colorToMove));
-                if (chessBoard.findAllMoves(colorToMove).Count == 0)
+                var fen = chessBoard.ToFen(colorToMove);
+
+
+                var possibleMoves = chessBoard.findAllMoves(colorToMove);
+                var fenMoves = new List<string>();
+
+                foreach (var possibleMove in possibleMoves)
+                {
+                    
+                }
+
+
+
+
+                if (possibleMoves.Count == 0)
                 {
                     colorToMove = colorToMove == "white" ? "black" : "white";
                     endGame(colorToMove, passedNodes);
