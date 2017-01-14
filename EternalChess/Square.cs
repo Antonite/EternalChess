@@ -1,4 +1,6 @@
 ﻿
+using System.Linq;
+
 namespace EternalChess
 {
     class Square
@@ -12,6 +14,16 @@ namespace EternalChess
             this.row = row;
             this.column = column;
             this.occupiedBy = occupiedBy;
+        }
+
+        public override string ToString()
+        {
+            if (occupiedBy == null) return " - ";
+            var output = "";
+            output += occupiedBy.color.ElementAt(0) + " ";
+            output += occupiedBy.type.Equals("Knight") ? "N" : occupiedBy.type.ElementAt(0) + "";
+
+            return output;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EternalChess
 {
@@ -15,10 +16,61 @@ namespace EternalChess
         public bool whiteLeftRookMoved = false;
         public bool blackRightRookMoved = false;
         public bool blackLeftRookMoved = false;
+        public int remainingPieces = 32;
 
         public ChessBoard()
         {
             initialize();
+        }
+
+        public Move GetMoveFromString(string move)
+        {
+            var columnBefore = letterToColumn(move.ElementAt(0));
+            var rowBefore = (move.ElementAt(1) - '0') - 1;
+            var columnAfter = letterToColumn(move.ElementAt(2));
+            var rowAfter = (move.ElementAt(3) - '0') - 1;
+
+            var squareBefore = board[rowBefore][columnBefore];
+
+            var type = move.Length == 5 ? getTypeFromChar(move.ElementAt(4)) : squareBefore.occupiedBy.type;
+
+            var output = new Move
+                (
+                    new Location(rowBefore, columnBefore),
+                    new Location(rowAfter, columnAfter),
+                    squareBefore.occupiedBy.color,
+                    type
+                );
+
+            return output;
+        }
+
+        private string getTypeFromChar(char type)
+        {
+            switch (type)
+            {
+                case 'q': return "Queen";
+                case 'r': return "Rook";
+                case 'k': return "Knight";
+                case 'b': return "Bishop";
+                default: return "Error in pawn promition";
+            }
+        }
+
+        private int letterToColumn(char letter)
+        {
+            switch (letter)
+            {
+                case 'a': return 0;
+                case 'b': return 1;
+                case 'c': return 2;
+                case 'd': return 3;
+                case 'e': return 4;
+                case 'f': return 5;
+                case 'g': return 6;
+                case 'h': return 7;
+                default: return 0;
+            }
         }
 
         public List<Move> findAllMoves(string color)
@@ -30,8 +82,7 @@ namespace EternalChess
             bool isChecked = !isSafe(currentKing.row, currentKing.column, enemyColor);
             if (isChecked)
             {
-                locationsOfMove = kingEscape(color, enemyColor);
-                moves = convertLocationsToMoves(new Location(currentKing.row, currentKing.column), locationsOfMove, "King", color);
+                moves = kingEscape(color, enemyColor);
                 return moves;
             }
             else
@@ -119,7 +170,7 @@ namespace EternalChess
 
             #region analyze last piece
             //is last piece moved checking king
-            Square lastMove = new Square(previousMove.after.row, previousMove.after.row, board[previousMove.after.row][previousMove.after.column].occupiedBy);
+            Square lastMove = new Square(previousMove.after.row, previousMove.after.column, board[previousMove.after.row][previousMove.after.column].occupiedBy);
             bool isChecking = true;
             switch (previousMove.piece)
             {
@@ -141,7 +192,7 @@ namespace EternalChess
                         // left
                         if(previousMove.after.column < currentKing.column)
                         {
-                            for (int r = currentKing.row, c = currentKing.column; r < previousMove.after.row && c > previousMove.after.column; r++, c--)
+                            for (int r = currentKing.row + 1, c = currentKing.column - 1; r < previousMove.after.row && c > previousMove.after.column; r++, c--)
                             {
                                 if (board[r][c].occupiedBy != null) isChecking = false;
                             }
@@ -149,7 +200,7 @@ namespace EternalChess
                         // right
                         else
                         {
-                            for (int r = currentKing.row, c = currentKing.column; r < previousMove.after.row && c < previousMove.after.column; r++, c++)
+                            for (int r = currentKing.row + 1, c = currentKing.column + 1; r < previousMove.after.row && c < previousMove.after.column; r++, c++)
                             {
                                 if (board[r][c].occupiedBy != null) isChecking = false;
                             }
@@ -161,7 +212,7 @@ namespace EternalChess
                         // left
                         if (previousMove.after.column < currentKing.column)
                         {
-                            for (int r = currentKing.row, c = currentKing.column; r > previousMove.after.row && c > previousMove.after.column; r--, c--)
+                            for (int r = currentKing.row - 1, c = currentKing.column - 1; r > previousMove.after.row && c > previousMove.after.column; r--, c--)
                             {
                                 if (board[r][c].occupiedBy != null) isChecking = false;
                             }
@@ -169,7 +220,7 @@ namespace EternalChess
                         // right
                         else
                         {
-                            for (int r = currentKing.row, c = currentKing.column; r > previousMove.after.row && c < previousMove.after.column; r--, c++)
+                            for (int r = currentKing.row - 1, c = currentKing.column + 1; r > previousMove.after.row && c < previousMove.after.column; r--, c++)
                             {
                                 if (board[r][c].occupiedBy != null) isChecking = false;
                             }
@@ -182,7 +233,7 @@ namespace EternalChess
                     // right
                     if (previousMove.after.column > currentKing.column)
                     {
-                        for (int c = currentKing.column; c < previousMove.after.column; c++)
+                        for (int c = currentKing.column + 1; c < previousMove.after.column; c++)
                         {
                             if (board[currentKing.row][c].occupiedBy != null) isChecking = false;
                         }
@@ -190,7 +241,7 @@ namespace EternalChess
                     // left
                     else if (previousMove.after.column < currentKing.column)
                     {
-                        for (int c = currentKing.column; c > previousMove.after.column; c--)
+                        for (int c = currentKing.column - 1; c > previousMove.after.column; c--)
                         {
                             if (board[currentKing.row][c].occupiedBy != null) isChecking = false;
                         }
@@ -198,7 +249,7 @@ namespace EternalChess
                     // below
                     else if (previousMove.after.row < currentKing.row)
                     {
-                        for (int r = currentKing.row; r > previousMove.after.row; r--)
+                        for (int r = currentKing.row - 1; r > previousMove.after.row; r--)
                         {
                             if (board[r][currentKing.column].occupiedBy != null) isChecking = false;
                         }
@@ -206,7 +257,7 @@ namespace EternalChess
                     // above
                     else if (previousMove.after.row > currentKing.row)
                     {
-                        for (int r = currentKing.row; r < previousMove.after.row; r++)
+                        for (int r = currentKing.row + 1; r < previousMove.after.row; r++)
                         {
                             if (board[r][currentKing.column].occupiedBy != null) isChecking = false;
                         }
@@ -221,7 +272,7 @@ namespace EternalChess
                     {
                         if (previousMove.after.column > currentKing.column)
                         {
-                            for (int c = currentKing.column; c < previousMove.after.column; c++)
+                            for (int c = currentKing.column + 1; c < previousMove.after.column; c++)
                             {
                                 if (board[currentKing.row][c].occupiedBy != null) isChecking = false;
                             }
@@ -229,7 +280,7 @@ namespace EternalChess
                         // left
                         else if (previousMove.after.column < currentKing.column)
                         {
-                            for (int c = currentKing.column; c > previousMove.after.column; c--)
+                            for (int c = currentKing.column - 1; c > previousMove.after.column; c--)
                             {
                                 if (board[currentKing.row][c].occupiedBy != null) isChecking = false;
                             }
@@ -237,7 +288,7 @@ namespace EternalChess
                         // below
                         else if (previousMove.after.row < currentKing.row)
                         {
-                            for (int r = currentKing.row; r > previousMove.after.row; r--)
+                            for (int r = currentKing.row - 1; r > previousMove.after.row; r--)
                             {
                                 if (board[r][currentKing.column].occupiedBy != null) isChecking = false;
                             }
@@ -245,7 +296,7 @@ namespace EternalChess
                         // above
                         else if (previousMove.after.row > currentKing.row)
                         {
-                            for (int r = currentKing.row; r < previousMove.after.row; r++)
+                            for (int r = currentKing.row + 1; r < previousMove.after.row; r++)
                             {
                                 if (board[r][currentKing.column].occupiedBy != null) isChecking = false;
                             }
@@ -260,7 +311,7 @@ namespace EternalChess
                             // left
                             if (previousMove.after.column < currentKing.column)
                             {
-                                for (int r = currentKing.row, c = currentKing.column; r < previousMove.after.row && c > previousMove.after.column; r++, c--)
+                                for (int r = currentKing.row + 1, c = currentKing.column - 1; r < previousMove.after.row && c > previousMove.after.column; r++, c--)
                                 {
                                     if (board[r][c].occupiedBy != null) isChecking = false;
                                 }
@@ -268,7 +319,7 @@ namespace EternalChess
                             // right
                             else
                             {
-                                for (int r = currentKing.row, c = currentKing.column; r < previousMove.after.row && c < previousMove.after.column; r++, c++)
+                                for (int r = currentKing.row + 1, c = currentKing.column + 1; r < previousMove.after.row && c < previousMove.after.column; r++, c++)
                                 {
                                     if (board[r][c].occupiedBy != null) isChecking = false;
                                 }
@@ -280,7 +331,7 @@ namespace EternalChess
                             // left
                             if (previousMove.after.column < currentKing.column)
                             {
-                                for (int r = currentKing.row, c = currentKing.column; r > previousMove.after.row && c > previousMove.after.column; r--, c--)
+                                for (int r = currentKing.row - 1, c = currentKing.column - 1; r > previousMove.after.row && c > previousMove.after.column; r--, c--)
                                 {
                                     if (board[r][c].occupiedBy != null) isChecking = false;
                                 }
@@ -288,7 +339,7 @@ namespace EternalChess
                             // right
                             else
                             {
-                                for (int r = currentKing.row, c = currentKing.column; r > previousMove.after.row && c < previousMove.after.column; r--, c++)
+                                for (int r = currentKing.row - 1, c = currentKing.column + 1; r > previousMove.after.row && c < previousMove.after.column; r--, c++)
                                 {
                                     if (board[r][c].occupiedBy != null) isChecking = false;
                                 }
@@ -309,7 +360,7 @@ namespace EternalChess
                 // to left of king
                 if(previousMove.before.column < currentKing.column)
                 {
-                    for(int i = currentKing.column; i >= 0; i--)
+                    for(int i = currentKing.column - 1; i >= 0; i--)
                     {
                         if (board[previousMove.before.row][i].occupiedBy == null) continue;
                         if (isEnemyQueenRock(previousMove.before.row, i, enemyColor))
@@ -323,7 +374,7 @@ namespace EternalChess
                 // to right of king
                 else if (previousMove.before.column > currentKing.column)
                 {
-                    for (int i = currentKing.column; i <= 7; i++)
+                    for (int i = currentKing.column + 1; i <= 7; i++)
                     {
                         if (board[previousMove.before.row][i].occupiedBy == null) continue;
                         if (isEnemyQueenRock(previousMove.before.row, i, enemyColor))
@@ -341,7 +392,7 @@ namespace EternalChess
                 // below king
                 if (previousMove.before.row < currentKing.row)
                 {
-                    for (int i = currentKing.row; i >= 0; i--)
+                    for (int i = currentKing.row - 1; i >= 0; i--)
                     {
                         if (board[i][previousMove.before.column].occupiedBy == null) continue;
                         if (isEnemyQueenRock(i, previousMove.before.column, enemyColor))
@@ -355,7 +406,7 @@ namespace EternalChess
                 // above king
                 if (previousMove.before.row > currentKing.row)
                 {
-                    for (int i = currentKing.row; i <= 7; i++)
+                    for (int i = currentKing.row + 1; i <= 7; i++)
                     {
                         if (board[i][previousMove.before.column].occupiedBy == null) continue;
                         if (isEnemyQueenRock(i, previousMove.before.column, enemyColor))
@@ -376,7 +427,7 @@ namespace EternalChess
                     // left
                     if (previousMove.before.column < currentKing.column)
                     {
-                        for (int r = currentKing.row, c = currentKing.column; r < previousMove.before.row && c > previousMove.before.column; r++, c--)
+                        for (int r = currentKing.row + 1, c = currentKing.column - 1; r < previousMove.before.row && c > previousMove.before.column; r++, c--)
                         {
                             if (board[r][c].occupiedBy == null) continue;
                             if (isEnemyQueenBishop(r, c, enemyColor))
@@ -390,7 +441,7 @@ namespace EternalChess
                     // right
                     else
                     {
-                        for (int r = currentKing.row, c = currentKing.column; r < previousMove.before.row && c < previousMove.before.column; r++, c++)
+                        for (int r = currentKing.row + 1, c = currentKing.column + 1; r < previousMove.before.row && c < previousMove.before.column; r++, c++)
                         {
                             if (board[r][c].occupiedBy == null) continue;
                             if (isEnemyQueenBishop(r, c, enemyColor))
@@ -408,7 +459,7 @@ namespace EternalChess
                     // left
                     if (previousMove.before.column < currentKing.column)
                     {
-                        for (int r = currentKing.row, c = currentKing.column; r > previousMove.before.row && c > previousMove.before.column; r--, c--)
+                        for (int r = currentKing.row - 1, c = currentKing.column - 1; r > previousMove.before.row && c > previousMove.before.column; r--, c--)
                         {
                             if (board[r][c].occupiedBy == null) continue;
                             if (isEnemyQueenBishop(r, c, enemyColor))
@@ -422,7 +473,7 @@ namespace EternalChess
                     // right
                     else
                     {
-                        for (int r = currentKing.row, c = currentKing.column; r > previousMove.before.row && c < previousMove.before.column; r--, c++)
+                        for (int r = currentKing.row - 1, c = currentKing.column + 1; r > previousMove.before.row && c < previousMove.before.column; r--, c++)
                         {
                             if (board[r][c].occupiedBy == null) continue;
                             if (isEnemyQueenBishop(r, c, enemyColor))
@@ -440,11 +491,17 @@ namespace EternalChess
             return attackers;
         }
 
-        private List<Location> kingEscape(string color, string enemyColor)
+        private List<Move> kingEscape(string color, string enemyColor)
         {
             Square currentKing = color == "white" ? whiteKing : blackKing;
+            var acceptableMoves = new List<Move>();
             List<Square> attackers = calculateCheckers(color);
             List<Location> possibleEscapeMoves = moveKing(currentKing.row, currentKing.column, color);
+            foreach (var possibleEscapeMove in possibleEscapeMoves)
+            {
+                acceptableMoves.Add(new Move(new Location(currentKing.row, currentKing.column), possibleEscapeMove, color, "King"));
+            }
+
             if (attackers.Count == 1)
             {
                 #region Find possible cover squares
@@ -458,7 +515,7 @@ namespace EternalChess
                             // left
                             if (attackers[0].column < currentKing.column)
                             {
-                                for (int r = currentKing.row, c = currentKing.column; r < attackers[0].row && c > attackers[0].column; r++, c--)
+                                for (int r = currentKing.row + 1, c = currentKing.column - 1; r < attackers[0].row && c > attackers[0].column; r++, c--)
                                 {
                                         possibleCoverSquares.Add(new Location(r, c));
                                 }
@@ -466,7 +523,7 @@ namespace EternalChess
                             // right
                             else
                             {
-                                for (int r = currentKing.row, c = currentKing.column; r < attackers[0].row && c < attackers[0].column; r++, c++)
+                                for (int r = currentKing.row + 1, c = currentKing.column + 1; r < attackers[0].row && c < attackers[0].column; r++, c++)
                                 {
                                         possibleCoverSquares.Add(new Location(r, c));
                                 }
@@ -478,7 +535,7 @@ namespace EternalChess
                             // left
                             if (attackers[0].column < currentKing.column)
                             {
-                                for (int r = currentKing.row, c = currentKing.column; r > attackers[0].row && c > attackers[0].column; r--, c--)
+                                for (int r = currentKing.row - 1, c = currentKing.column - 1; r > attackers[0].row && c > attackers[0].column; r--, c--)
                                 {
                                         possibleCoverSquares.Add(new Location(r, c));
                                 }
@@ -486,7 +543,7 @@ namespace EternalChess
                             // right
                             else
                             {
-                                for (int r = currentKing.row, c = currentKing.column; r > attackers[0].row && c < attackers[0].column; r--, c++)
+                                for (int r = currentKing.row - 1, c = currentKing.column + 1; r > attackers[0].row && c < attackers[0].column; r--, c++)
                                 {
                                         possibleCoverSquares.Add(new Location(r, c));
                                 }
@@ -497,7 +554,7 @@ namespace EternalChess
                         // right
                         if (attackers[0].column > currentKing.column)
                         {
-                            for (int c = currentKing.column; c < attackers[0].column; c++)
+                            for (int c = currentKing.column + 1; c < attackers[0].column; c++)
                             {
                                 possibleCoverSquares.Add(new Location(currentKing.row, c));
                             }
@@ -505,7 +562,7 @@ namespace EternalChess
                         // left
                         else if (attackers[0].column < currentKing.column)
                         {
-                            for (int c = currentKing.column; c > attackers[0].column; c--)
+                            for (int c = currentKing.column - 1; c > attackers[0].column; c--)
                             {
                                 possibleCoverSquares.Add(new Location(currentKing.row, c));
                             }
@@ -513,7 +570,7 @@ namespace EternalChess
                         // below
                         else if (attackers[0].row < currentKing.row)
                         {
-                            for (int r = currentKing.row; r > attackers[0].row; r--)
+                            for (int r = currentKing.row - 1; r > attackers[0].row; r--)
                             {
                                 possibleCoverSquares.Add(new Location(r, currentKing.column));
                             }
@@ -521,7 +578,7 @@ namespace EternalChess
                         // above
                         else if (attackers[0].row > currentKing.row)
                         {
-                            for (int r = currentKing.row; r < attackers[0].row; r++)
+                            for (int r = currentKing.row + 1; r < attackers[0].row; r++)
                             {
                                 possibleCoverSquares.Add(new Location(r, currentKing.column));
                             }
@@ -533,7 +590,7 @@ namespace EternalChess
                         {
                             if (attackers[0].column > currentKing.column)
                             {
-                                for (int c = currentKing.column; c < attackers[0].column; c++)
+                                for (int c = currentKing.column + 1; c < attackers[0].column; c++)
                                 {
                                     possibleCoverSquares.Add(new Location(currentKing.row, c));
                                 }
@@ -541,7 +598,7 @@ namespace EternalChess
                             // left
                             else if (attackers[0].column < currentKing.column)
                             {
-                                for (int c = currentKing.column; c > attackers[0].column; c--)
+                                for (int c = currentKing.column - 1; c > attackers[0].column; c--)
                                 {
                                     possibleCoverSquares.Add(new Location(currentKing.row, c));
                                 }
@@ -549,7 +606,7 @@ namespace EternalChess
                             // below
                             else if (attackers[0].row < currentKing.row)
                             {
-                                for (int r = currentKing.row; r > attackers[0].row; r--)
+                                for (int r = currentKing.row - 1; r > attackers[0].row; r--)
                                 {
                                     possibleCoverSquares.Add(new Location(r, currentKing.column));
                                 }
@@ -557,7 +614,7 @@ namespace EternalChess
                             // above
                             else if (attackers[0].row > currentKing.row)
                             {
-                                for (int r = currentKing.row; r < attackers[0].row; r++)
+                                for (int r = currentKing.row + 1; r < attackers[0].row; r++)
                                 {
                                     possibleCoverSquares.Add(new Location(r, currentKing.column));
                                 }
@@ -572,7 +629,7 @@ namespace EternalChess
                                 // left
                                 if (attackers[0].column < currentKing.column)
                                 {
-                                    for (int r = currentKing.row, c = currentKing.column; r < attackers[0].row && c > attackers[0].column; r++, c--)
+                                    for (int r = currentKing.row + 1, c = currentKing.column - 1; r < attackers[0].row && c > attackers[0].column; r++, c--)
                                     {
                                         possibleCoverSquares.Add(new Location(r, c));
                                     }
@@ -580,7 +637,7 @@ namespace EternalChess
                                 // right
                                 else
                                 {
-                                    for (int r = currentKing.row, c = currentKing.column; r < attackers[0].row && c < attackers[0].column; r++, c++)
+                                    for (int r = currentKing.row + 1, c = currentKing.column + 1; r < attackers[0].row && c < attackers[0].column; r++, c++)
                                     {
                                         possibleCoverSquares.Add(new Location(r, c));
                                     }
@@ -592,7 +649,7 @@ namespace EternalChess
                                 // left
                                 if (attackers[0].column < currentKing.column)
                                 {
-                                    for (int r = currentKing.row, c = currentKing.column; r > attackers[0].row && c > attackers[0].column; r--, c--)
+                                    for (int r = currentKing.row - 1, c = currentKing.column - 1; r > attackers[0].row && c > attackers[0].column; r--, c--)
                                     {
                                         possibleCoverSquares.Add(new Location(r, c));
                                     }
@@ -600,7 +657,7 @@ namespace EternalChess
                                 // right
                                 else
                                 {
-                                    for (int r = currentKing.row, c = currentKing.column; r > attackers[0].row && c < attackers[0].column; r--, c++)
+                                    for (int r = currentKing.row - 1, c = currentKing.column + 1; r > attackers[0].row && c < attackers[0].column; r--, c++)
                                     {
                                         possibleCoverSquares.Add(new Location(r, c));
                                     }
@@ -611,9 +668,11 @@ namespace EternalChess
                     default: break;
                 }
 
+                possibleCoverSquares.Add(new Location(attackers[0].row, attackers[0].column));
+
                 #endregion
                 #region Try cover the king
-                foreach(List<Square> rows in board)
+                foreach (List<Square> rows in board)
                 {
                     foreach (Square square in rows)
                     {
@@ -622,8 +681,19 @@ namespace EternalChess
                             List<Location> possibleMoves = findPossibleMoves(new Location(square.row, square.column), color, enemyColor);
                             foreach(Location possibleCoverMove in possibleCoverSquares)
                             {
+                                var coverFound = false;
+                                foreach (var possibleMove in possibleMoves)
+                                {
+                                    if (possibleMove.column == possibleCoverMove.column &&
+                                        possibleMove.row == possibleCoverMove.row)
+                                    {
+                                        coverFound = true;
+                                        break;
+                                    }
+                                }
+
                                 // cover found
-                                if (possibleMoves.Contains(possibleCoverMove))
+                                if (coverFound)
                                 {
                                     Piece takenPiece = board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy;
                                     board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy = square.occupiedBy;
@@ -631,7 +701,7 @@ namespace EternalChess
                                     bool isMoveSafe = isSafe(currentKing.row, currentKing.column, enemyColor);
                                     square.occupiedBy = board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy;
                                     board[possibleCoverMove.row][possibleCoverMove.column].occupiedBy = takenPiece;
-                                    if (isMoveSafe) possibleEscapeMoves.Add(possibleCoverMove);
+                                    if (isMoveSafe) acceptableMoves.Add(new Move(new Location(square.row, square.column), possibleCoverMove, square.occupiedBy.color, square.occupiedBy.type));
                                 }
                             }
                         }
@@ -639,7 +709,7 @@ namespace EternalChess
                 }
                 #endregion
             }
-            return possibleEscapeMoves;
+            return acceptableMoves;
         }
 
         private Move convertLocationToMove(Location locationBefore, Location locationAfter, string type, string color)
@@ -666,27 +736,47 @@ namespace EternalChess
                 #region bishop
                 case "Bishop":
                     // top left
-                    for (int r = location.row, c = location.column; r <= 7 && c >= 0; r++, c--)
+                    for (int r = location.row + 1, c = location.column - 1; r <= 7 && c >= 0; r++, c--)
                     {
-                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        if (board[r][c].occupiedBy == null) possibleMoves.Add(new Location(r, c));
+                        else if (board[r][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, c));
+                            break;
+                        }
                         else break;
                     }
                     // top right
-                    for (int r = location.row, c = location.column; r <= 7 && c <= 7; r++, c++)
+                    for (int r = location.row + 1, c = location.column + 1; r <= 7 && c <= 7; r++, c++)
                     {
-                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        if (board[r][c].occupiedBy == null) possibleMoves.Add(new Location(r, c));
+                        else if (board[r][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, c));
+                            break;
+                        }
                         else break;
                     }
                     // bottom left
-                    for (int r = location.row, c = location.column; r >= 0 && c >= 0; r--, c--)
+                    for (int r = location.row - 1, c = location.column - 1; r >= 0 && c >= 0; r--, c--)
                     {
-                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        if (board[r][c].occupiedBy == null) possibleMoves.Add(new Location(r, c));
+                        else if (board[r][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, c));
+                            break;
+                        }
                         else break;
                     }
                     // bottom right
-                    for (int r = location.row, c = location.column; r >= 0 && c <= 7; r--, c++)
+                    for (int r = location.row - 1, c = location.column + 1; r >= 0 && c <= 7; r--, c++)
                     {
-                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        if (board[r][c].occupiedBy == null) possibleMoves.Add(new Location(r, c));
+                        else if (board[r][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, c));
+                            break;
+                        }
                         else break;
                     }
                     break;
@@ -694,27 +784,47 @@ namespace EternalChess
                 #region rook
                 case "Rook":
                     // right
-                    for (int c = location.column; c <= 7 ; c++)
+                    for (int c = location.column + 1; c <= 7 ; c++)
                     {
-                        if (board[location.row][c].occupiedBy == null || board[location.row][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(location.row, c));
+                        if (board[location.row][c].occupiedBy == null) possibleMoves.Add(new Location(location.row, c));
+                        else if (board[location.row][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(location.row, c));
+                            break;
+                        }
                         else break;
                     }
                     // left
-                    for (int c = location.column; c >= 0; c--)
+                    for (int c = location.column - 1; c >= 0; c--)
                     {
-                        if (board[location.row][c].occupiedBy == null || board[location.row][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(location.row, c));
+                        if (board[location.row][c].occupiedBy == null) possibleMoves.Add(new Location(location.row, c));
+                        else if (board[location.row][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(location.row, c));
+                            break;
+                        }
                         else break;
                     }
                     // below
-                    for (int r = location.row; r >= 0; r--)
+                    for (int r = location.row - 1; r >= 0; r--)
                     {
-                        if (board[r][location.column].occupiedBy == null || board[r][location.column].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, location.column));
+                        if (board[r][location.column].occupiedBy == null) possibleMoves.Add(new Location(r, location.column));
+                        else if (board[r][location.column].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, location.column));
+                            break;
+                        }
                         else break;
                     }
                     // above
-                    for (int r = location.row; r <= 7; r++)
+                    for (int r = location.row + 1; r <= 7; r++)
                     {
-                        if (board[r][location.column].occupiedBy == null || board[r][location.column].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, location.column));
+                        if (board[r][location.column].occupiedBy == null) possibleMoves.Add(new Location(r, location.column));
+                        else if (board[r][location.column].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, location.column));
+                            break;
+                        }
                         else break;
                     }
                     break;
@@ -722,51 +832,91 @@ namespace EternalChess
                 #region queen
                 case "Queen":
                     // right
-                    for (int c = location.column; c <= 7; c++)
+                    for (int c = location.column + 1; c <= 7; c++)
                     {
-                        if (board[location.row][c].occupiedBy == null || board[location.row][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(location.row, c));
+                        if (board[location.row][c].occupiedBy == null) possibleMoves.Add(new Location(location.row, c));
+                        else if (board[location.row][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(location.row, c));
+                            break;
+                        }
                         else break;
                     }
                     // left
-                    for (int c = location.column; c >= 0; c--)
+                    for (int c = location.column - 1; c >= 0; c--)
                     {
-                        if (board[location.row][c].occupiedBy == null || board[location.row][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(location.row, c));
+                        if (board[location.row][c].occupiedBy == null) possibleMoves.Add(new Location(location.row, c));
+                        else if (board[location.row][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(location.row, c));
+                            break;
+                        }
                         else break;
                     }
                     // below
-                    for (int r = location.row; r >= 0; r--)
+                    for (int r = location.row - 1; r >= 0; r--)
                     {
-                        if (board[r][location.column].occupiedBy == null || board[r][location.column].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, location.column));
+                        if (board[r][location.column].occupiedBy == null) possibleMoves.Add(new Location(r, location.column));
+                        else if (board[r][location.column].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, location.column));
+                            break;
+                        }
                         else break;
                     }
                     // above
-                    for (int r = location.row; r <= 7; r++)
+                    for (int r = location.row + 1; r <= 7; r++)
                     {
-                        if (board[r][location.column].occupiedBy == null || board[r][location.column].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, location.column));
+                        if (board[r][location.column].occupiedBy == null) possibleMoves.Add(new Location(r, location.column));
+                        else if (board[r][location.column].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, location.column));
+                            break;
+                        }
                         else break;
                     }
                     // top left
-                    for (int r = location.row, c = location.column; r <= 7 && c >= 0; r++, c--)
+                    for (int r = location.row + 1, c = location.column - 1; r <= 7 && c >= 0; r++, c--)
                     {
-                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        if (board[r][c].occupiedBy == null) possibleMoves.Add(new Location(r, c));
+                        else if (board[r][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, c));
+                            break;
+                        }
                         else break;
                     }
                     // top right
-                    for (int r = location.row, c = location.column; r <= 7 && c <= 7; r++, c++)
+                    for (int r = location.row + 1, c = location.column + 1; r <= 7 && c <= 7; r++, c++)
                     {
-                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        if (board[r][c].occupiedBy == null) possibleMoves.Add(new Location(r, c));
+                        else if (board[r][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, c));
+                            break;
+                        }
                         else break;
                     }
                     // bottom left
-                    for (int r = location.row, c = location.column; r >= 0 && c >= 0; r--, c--)
+                    for (int r = location.row - 1, c = location.column - 1; r >= 0 && c >= 0; r--, c--)
                     {
-                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        if (board[r][c].occupiedBy == null) possibleMoves.Add(new Location(r, c));
+                        else if (board[r][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, c));
+                            break;
+                        }
                         else break;
                     }
                     // bottom right
-                    for (int r = location.row, c = location.column; r >= 0 && c <= 7; r--, c++)
+                    for (int r = location.row - 1, c = location.column + 1; r >= 0 && c <= 7; r--, c++)
                     {
-                        if (board[r][c].occupiedBy == null || board[r][c].occupiedBy.color == enemyColor) possibleMoves.Add(new Location(r, c));
+                        if (board[r][c].occupiedBy == null) possibleMoves.Add(new Location(r, c));
+                        else if (board[r][c].occupiedBy.color == enemyColor)
+                        {
+                            possibleMoves.Add(new Location(r, c));
+                            break;
+                        }
                         else break;
                     }
                     break;
@@ -774,8 +924,9 @@ namespace EternalChess
                 #region pawn
                 case "Pawn":
                     // can move 2 spaces
-                    if(color == "white")
+                    if (color == "white")
                     {
+                        // white
                         // move 1
                         if (isValid(location.row + 1, location.column) && board[location.row + 1][location.column].occupiedBy == null)
                         {
@@ -795,43 +946,37 @@ namespace EternalChess
                             && board[location.row + 1][location.column + 1].occupiedBy.color == "black")
                             possibleMoves.Add(new Location(location.row + 1, location.column + 1));
                         // En passant
-                        if (location.row == 4 && previousMove.piece == "Pawn" && 
-                            (previousMove.before.row - previousMove.after.row) == 2 &&
-                            Math.Abs(previousMove.after.column - location.column) == 1)
+                        if (location.row == 4 && previousMove.piece == "Pawn" && previousMove.before.row == 6 && Math.Abs(previousMove.after.column - location.column) == 1)
                         {
                             possibleMoves.Add(new Location(location.row + 1, previousMove.after.column));
                         }
                         break;
                     }
-                    else
+                    // black
+                    // move 1
+                    if (isValid(location.row - 1, location.column) && board[location.row - 1][location.column].occupiedBy == null)
                     {
-                        // move 1
-                        if (isValid(location.row - 1, location.column) && board[location.row - 1][location.column].occupiedBy == null)
-                        {
-                            possibleMoves.Add(new Location(location.row - 1, location.column));
-                            // move 2
-                            if (location.row == 6 && isValid(location.row - 2, location.column) && board[location.row - 2][location.column].occupiedBy == null)
-                                possibleMoves.Add(new Location(location.row - 2, location.column));
-                        }
-                        // take left
-                        if (isValid(location.row - 1, location.column - 1)
-                            && board[location.row - 1][location.column - 1].occupiedBy != null
-                            && board[location.row - 1][location.column - 1].occupiedBy.color == "white")
-                            possibleMoves.Add(new Location(location.row - 1, location.column - 1));
-                        // take right
-                        if (isValid(location.row - 1, location.column + 1)
-                            && board[location.row - 1][location.column + 1].occupiedBy != null
-                            && board[location.row - 1][location.column + 1].occupiedBy.color == "white")
-                            possibleMoves.Add(new Location(location.row - 1, location.column + 1));
-                        // En passant
-                        if (location.row == 3 && previousMove.piece == "Pawn" &&
-                            (previousMove.after.row - previousMove.before.row) == 2 &&
-                            Math.Abs(previousMove.after.column - location.column) == 1)
-                        {
-                            possibleMoves.Add(new Location(location.row - 1, previousMove.after.column));
-                        }
-                        break;
+                        possibleMoves.Add(new Location(location.row - 1, location.column));
+                        // move 2
+                        if (location.row == 6 && isValid(location.row - 2, location.column) && board[location.row - 2][location.column].occupiedBy == null)
+                            possibleMoves.Add(new Location(location.row - 2, location.column));
                     }
+                    // take left
+                    if (isValid(location.row - 1, location.column - 1)
+                        && board[location.row - 1][location.column - 1].occupiedBy != null
+                        && board[location.row - 1][location.column - 1].occupiedBy.color == "white")
+                        possibleMoves.Add(new Location(location.row - 1, location.column - 1));
+                    // take right
+                    if (isValid(location.row - 1, location.column + 1)
+                        && board[location.row - 1][location.column + 1].occupiedBy != null
+                        && board[location.row - 1][location.column + 1].occupiedBy.color == "white")
+                        possibleMoves.Add(new Location(location.row - 1, location.column + 1));
+                    // En passant
+                    if (location.row == 3 && previousMove.piece == "Pawn" && previousMove.before.row == 1 && Math.Abs(previousMove.after.column - location.column) == 1)
+                    {
+                        possibleMoves.Add(new Location(location.row - 1, previousMove.after.column));
+                    }
+                    break;
                 #endregion
                 #region knight
                 case "Knight":
@@ -987,7 +1132,7 @@ namespace EternalChess
             {
                 if (board[i][c].occupiedBy == null) continue;
                 if (board[i][c].occupiedBy.color != enemyColor) break;
-                if (isEnemyQueenRock(r, i, enemyColor)) return false;
+                if (isEnemyQueenRock(i, c, enemyColor)) return false;
                 else break;
             }
 
@@ -996,7 +1141,7 @@ namespace EternalChess
             {
                 if (board[i][c].occupiedBy == null) continue;
                 if (board[i][c].occupiedBy.color != enemyColor) break;
-                if (isEnemyQueenRock(r, i, enemyColor)) return false;
+                if (isEnemyQueenRock(i, c, enemyColor)) return false;
                 else break;
             }
 
@@ -1162,8 +1307,23 @@ namespace EternalChess
             }
         }
 
+        private void killUnit(int row, int column)
+        {
+            if (board[row][column].occupiedBy != null) remainingPieces--;
+        }
+
         public void performMove(Move move)
         {
+            var canMove = true;
+            #region Promotion
+            if (move.piece != "Pawn" && board[move.before.row][move.before.column].occupiedBy.type.Equals("Pawn"))
+            {
+                killUnit(move.after.row, move.after.column);
+                board[move.after.row][move.after.column].occupiedBy = new Piece(move.piece, move.color);
+                board[move.before.row][move.before.column].occupiedBy = null;
+                canMove = false;
+            }
+            #endregion
             #region king
             // castling short
             if (move.piece == "King" && move.after.column - move.before.column == 2)
@@ -1172,6 +1332,7 @@ namespace EternalChess
                 board[move.after.row][5].occupiedBy = board[move.before.row][7].occupiedBy;
                 board[move.after.row][4].occupiedBy = null;
                 board[move.after.row][7].occupiedBy = null;
+                canMove = false;
             }
             // castling long
             else if (move.piece == "King" && move.after.column - move.before.column == -2)
@@ -1180,10 +1341,22 @@ namespace EternalChess
                 board[move.after.row][3].occupiedBy = board[move.before.row][0].occupiedBy;
                 board[move.after.row][4].occupiedBy = null;
                 board[move.after.row][0].occupiedBy = null;
+                canMove = false;
             }
             #endregion
-            else
+            #region En passant
+            else if (move.piece == "Pawn" && move.after.column != move.before.column && board[move.after.row][move.after.column].occupiedBy == null)
             {
+                remainingPieces--;
+                board[move.after.row][move.after.column].occupiedBy = board[move.before.row][move.before.column].occupiedBy;
+                board[move.before.row][move.before.column].occupiedBy = null;
+                board[move.before.row][move.after.column].occupiedBy = null;
+                canMove = false;
+            }
+            #endregion
+            if (canMove)
+            {
+                killUnit(move.after.row, move.after.column);
                 board[move.after.row][move.after.column].occupiedBy = board[move.before.row][move.before.column].occupiedBy;
                 board[move.before.row][move.before.column].occupiedBy = null;
             }
@@ -1209,6 +1382,20 @@ namespace EternalChess
                 if (move.before.column == 7) blackRightRookMoved = true;
             }
             previousMove = move;
+        }
+
+        public override string ToString()
+        {
+            var output = "";
+            for (var i = 7; i >= 0; i--)
+            {
+                foreach (var square in board[i])
+                {
+                    output += square + " ";
+                }
+                output += "\n";
+            }
+            return output;
         }
     }
 }

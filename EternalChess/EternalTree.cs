@@ -90,6 +90,15 @@ namespace EternalChess
             losses = 1;
         }
 
-        
+        public EternalTree FindMove(Move move)
+        {
+            foreach (var eternalTree in responses)
+            {
+                if (eternalTree.move.stringMove.Equals(move.stringMove)) return eternalTree;
+            }
+
+            return null;
+        }
+
     }
 }

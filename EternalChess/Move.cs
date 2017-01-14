@@ -20,7 +20,11 @@ namespace EternalChess
 
         public string toString()
         {
-            return color + " " + piece + " " + columnToLetter(after.column) + (after.row + 1) + " from " + columnToLetter(before.column) + (before.row + 1);
+            var isProtion = piece.Equals("Pawn") && (after.row == 7 || after.row == 0);
+            var tempPiece = isProtion ? "Pawn" : piece;
+            var output = color + " " + tempPiece + " " + columnToLetter(after.column) + (after.row + 1) + " from " + columnToLetter(before.column) + (before.row + 1);
+            if (isProtion) output += ", Promoted to " + piece;
+            return output;
         }
 
         private string columnToLetter(int column)
