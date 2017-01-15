@@ -125,7 +125,8 @@ namespace EternalChess
                     FileName = "cmd.exe",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
-                    RedirectStandardInput = true
+                    RedirectStandardInput = true,
+                    CreateNoWindow = true
                 }
             };
 
@@ -134,7 +135,7 @@ namespace EternalChess
             write.WriteLine("stockfish_8_x64.exe");
             write.WriteLine("setoption name Threads value 8");
             write.WriteLine("setoption name Hash value 6144");
-            write.WriteLine("setoption name SyzygyPath value D:\\syzygy\\wdl");
+            write.WriteLine("setoption name SyzygyPath value D:\\syzygy\\wdl;D:\\syzygy\\dtz");
             write.WriteLine("position startpos moves " + moves);
             write.WriteLine("go movetime " + moveTime);
 
