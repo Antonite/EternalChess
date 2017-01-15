@@ -8,8 +8,8 @@ namespace EternalChess
 {
     public class MoveStat
     {
-        public string Move { get; set; }
-        public int Win { get; set; }
-        public int Loss { get; set; }
+        public string m { get; set; }
+        public double w { get; set; }
+        public double l { get; set; }
     }
 }

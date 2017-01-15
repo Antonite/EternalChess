@@ -381,7 +381,7 @@ namespace EternalChess
                         if (board[i][previousMove.before.column].occupiedBy == null) continue;
                         if (isEnemyQueenRock(i, previousMove.before.column, enemyColor))
                         {
-                            attackers.Add(new Square(i, previousMove.before.column, board[previousMove.before.row][i].occupiedBy));
+                            attackers.Add(new Square(i, previousMove.before.column, board[i][previousMove.before.column].occupiedBy));
                             return attackers;
                         }
                         else break;
@@ -395,7 +395,7 @@ namespace EternalChess
                         if (board[i][previousMove.before.column].occupiedBy == null) continue;
                         if (isEnemyQueenRock(i, previousMove.before.column, enemyColor))
                         {
-                            attackers.Add(new Square(i, previousMove.before.column, board[previousMove.before.row][i].occupiedBy));
+                            attackers.Add(new Square(i, previousMove.before.column, board[i][previousMove.before.column].occupiedBy));
                             return attackers;
                         }
                         else break;
@@ -1387,7 +1387,7 @@ namespace EternalChess
             var output = "";
 
             // board position
-            for (var i = 7; i <= 0; i--)
+            for (var i = 7; i >= 0; i--)
             {
                 var emptySquares = 0;
                 foreach (var square in board[i])
@@ -1398,11 +1398,18 @@ namespace EternalChess
                         continue;
                     }
 
+                    if (emptySquares != 0)
+                    {
+                        output += emptySquares;
+                        emptySquares = 0;
+                    }
+
                     var piece = square.occupiedBy.type.Equals("Knight") ? "N" : square.occupiedBy.type.ElementAt(0).ToString();
                     if (square.occupiedBy.color.Equals("black")) piece = piece.ToLower();
-                    output += emptySquares + piece;
-                    emptySquares = 0;
+                    output += piece;
                 }
+
+                if (emptySquares != 0) output += emptySquares;
                 output += "/";
             }
 

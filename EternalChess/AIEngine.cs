@@ -9,16 +9,17 @@ namespace EternalChess
 {
     class AIEngine
     {
-        public ChessBoard chessBoard;
+        public ChessBoard ChessBoard;
+        public DatabaseContoller DatabaseContoller;
 
         public AIEngine()
         {
-            initialize();
+            Initialize();
         }
 
-        private void initialize()
+        private void Initialize()
         {
-
+            DatabaseContoller = new DatabaseContoller();
         }
 
         public void run()
@@ -32,65 +33,81 @@ namespace EternalChess
         private void runSingleGame()
         {
             // ?chessBoard.ToString(),nq
-            chessBoard = new ChessBoard();
-            List<string> passedNodes = new List<string>();
-            string colorToMove = "white";
+            ChessBoard = new ChessBoard();
+            var passedNodesWhite = new Dictionary<string, string>();
+            var passedNodesBlack = new Dictionary<string, string>();
+            var pastMoves = new List<string>();
+            var colorToMove = "white";
             var moves = "";
-//
+
 //                        var moveTests = new string[]
 //                        {
-//                            "e2e4", "e7e5", "g1f3", "b8c6", "f1b5", "a7a6", "b5c6", "d7c6", "e1g1", "f8d6", "d2d4", "e5d4", "d1d4", "f7f6", "f1e1", "g8e7", "e4e5", "f6e5", "f3e5", "e8g8", "b1d2", "c8e6", "d2f3", "d8e8", "c1d2", "e7g6", "e5c4", "a8d8", "c4d6", "d8d6", "d4e3", "f8f3", "g2f3", "e8f7", "e3e4", "e6d7", "a1d1", "d7f5", "e4e2", "f5c2", "d1c1", "g6h4", "e2e8"
+//                            "g1f3", "g8f6", "d2d4", "e7e6", "c1f4", "f8e7", "e2e3", "e8g8", "f1d3", "d7d5", "b1d2", "f6h5", "f4e5", "b8c6", "h2h3", "c6e5", "d4e5", "g7g6", "e1g1", "b7b6", "d3b5", "c8b7", "f3d4", "c7c5", "d4c6", "d8d7", "c6e7", "d7e7", "b5e2", "h5g7", "d2f3", "f7f6", "c2c3", "e7c7", "e5f6", "f8f6", "c3c4", "d5d4", "e3d4", "a8d8", "d4d5", "e6d5", "c4d5", "b7d5", "d1c2", "d5f3", "e2f3", "g7e6", "a1e1", "e6d4", "c2c4", "g8h8", "f3d1", "b6b5", "c4c3", "a7a5", "e1e4", "a5a4", "f1e1", "c7d6", "e4e5", "c5c4", "d1g4", "h8g8", "h3h4", "f6f4", "f2f3", "h7h5", "g4e6", "g8h7", "c3e3", "d4e6", "e5e6", "d6d4", "e6b6", "d8e8", "e3d4", "e8e1", "g1f2", "f4d4", "f2e1", "d4h4", "b6b5", "h4h1", "e1f2", "h1a1", "a2a3", "c4c3", "b2c3", "a1a3", "b5a5", "a3a2", "f2g3", "h7g7", "c3c4", "a4a3", "c4c5", "g7f6", "g3f4", "f6e6", "f4e4", "e6d7", "a5a6", "g6g5", "e4f5", "d7c7", "f5g6", "h5h4", "g6f5", "a2g2", "a6a3", "h4h3", "a3a6", "h3h2", "a6h6", "c7d7", "f5e5", "g2f2", "e5f5", "f2f3", "f5g5", "f3f2", "g5g4", "f2c2", "g4g3", "c2c3", "g3f4", "c3c4", "f4g3", "c4c2", "h6h2", "c2c5", "g3f3", "d7e6", "f3e4", "c5c8", "h2h6", "e6f7", "h6h1", "c8a8", "h1f1", "f7e6", "e4d4", "a8d8", "d4c3", "e6e5", "f1e1", "e5f4", "e1g1", "f4f3", "g1f1", "f3e2", "f1g1", "d8f8", "c3d4", "f8a8", "g1b1", "e2f3", "d4e5", "a8a2", "b1b4", "a2a3", "b4b6", "f3g4", "e5e4", "a3a4", "e4e3", "a4a3", "e3d2", "a3a5", "d2c3", "a5f5", "c3d4", "f5f7", "d4e3", "f7a7", "b6c6", "g4h5", "e3d4", "h5g4", "d4e3", "g4f5", "c6c8", "f5e6"
 //                        };
 //                        var moveTestNum = 0;
 
             while (true)
             {
-                var fen = chessBoard.ToFen(colorToMove);
+                var fen = ChessBoard.ToFen(colorToMove);
 
-
-                var possibleMoves = chessBoard.findAllMoves(colorToMove);
-                var fenMoves = new List<string>();
-
-                foreach (var possibleMove in possibleMoves)
-                {
-                    
-                }
-
-
-
-
+                var possibleMoves = ChessBoard.findAllMoves(colorToMove);
                 if (possibleMoves.Count == 0)
                 {
                     colorToMove = colorToMove == "white" ? "black" : "white";
-                    endGame(colorToMove, passedNodes);
+                    EndGame(colorToMove, passedNodesWhite, passedNodesBlack);
                     break;
                 }
 
-                var bestStockfishMove = askStockfish(moves);
+                var fenMoves = DatabaseContoller.GetMovesById(fen);
+                var bestFenMove = "";
+
+                if (fenMoves != null)
+                {
+                    var topWinRatio = 0.0;
+                    foreach (var move in fenMoves.Moves)
+                    {
+                        var winRatio = move.w/(move.w + move.l);
+                        if (winRatio > 0.5 && winRatio > topWinRatio)
+                        {
+                            topWinRatio = winRatio;
+                            bestFenMove = move.m;
+                        }
+                    }
+                }
+                
+                if (bestFenMove == "") bestFenMove = askStockfish(moves);
+                
 //                if (moveTestNum > moveTests.Length - 1)
 //                {
 //                    // success
 //                }
-//                var bestStockfishMove = moveTests[moveTestNum];
+//                bestFenMove = moveTests[moveTestNum];
 //                moveTestNum++;
-                moves += " " + bestStockfishMove;
-                var bestMove = chessBoard.GetMoveFromString(bestStockfishMove);
 
-//                currentTree.FindMove(bestMove);
+                moves += " " + bestFenMove;
+                var bestMove = ChessBoard.GetMoveFromString(bestFenMove);
 
-                string currentMove = bestMove.stringMove;
+                var currentMove = bestMove.stringMove;
                 Console.WriteLine(currentMove);
 
-                //perform move
-                chessBoard.performMove(bestMove);
-                passedNodes.Add(bestStockfishMove);
-                colorToMove = colorToMove == "white" ? "black" : "white";
-//                currentTree = currentTree.FindMove(bestMove);
-
-                int moveCount = passedNodes.Count;
-                if ((moveCount >= 12 && isRepeat3Times(passedNodes.GetRange(moveCount - 12, 12))) || chessBoard.remainingPieces == 2)
+                if (colorToMove.Equals("white"))
                 {
-                    endGame("tie", passedNodes);
+                    if (!passedNodesWhite.ContainsKey(fen)) passedNodesWhite.Add(fen, bestFenMove);
+                }
+                else
+                {
+                    if (!passedNodesBlack.ContainsKey(fen)) passedNodesBlack.Add(fen, bestFenMove);
+                }
+                pastMoves.Add(fen);
+
+                //perform move
+                ChessBoard.performMove(bestMove);
+                colorToMove = colorToMove == "white" ? "black" : "white";
+
+                int moveCount = pastMoves.Count;
+                if ((moveCount >= 12 && isRepeat3Times(pastMoves.GetRange(moveCount - 12, 12))) || ChessBoard.remainingPieces == 2)
+                {
+                    EndGame("tie", passedNodesWhite, passedNodesBlack);
                     break;
                 }
             }
@@ -115,7 +132,7 @@ namespace EternalChess
             write.WriteLine("setoption name Threads value 8");
             write.WriteLine("setoption name SyzygyPath value D:\\syzygy\\dtz");
             write.WriteLine("position startpos moves " + moves);
-            write.WriteLine("go movetime 100");
+            write.WriteLine("go movetime 1000");
 
             while (true)
             {
@@ -127,19 +144,6 @@ namespace EternalChess
             }
         }
 
-        private int FindResponse(Move move, ref List<EternalTree> responses)
-        {
-            for (int i = 0; i < responses.Count; i++)
-            {
-                if (responses[i].move.stringMove.Equals(move.stringMove))
-                {
-                    return i;
-                }
-            }
-            Console.Write("Error identifying setup respose.");
-            return 0;
-        }
-
         private bool isRepeat3Times(List<string> nodes)
         {
             return nodes[0].Equals(nodes[4]) && nodes[0].Equals(nodes[8]) &&
@@ -148,72 +152,83 @@ namespace EternalChess
                     nodes[3].Equals(nodes[7]) && nodes[3].Equals(nodes[11]);
         }
 
-        private void endGame(string result, List<string> passedNodes)
+        private void EndGame(string result, Dictionary<string, string> passedNodesWhite, Dictionary<string, string> passedNodesBlack)
         {
-            List<int> pathing = new List<int>();
+            var whiteAddToWin = 0.5;
+            var whiteAddToLoss = 0.5;
+            var blackAddToWin = 0.5;
+            var blackAddToLoss = 0.5;
 
             switch (result)
             {
                 case "tie":
-//                    tieGame(ref eternalTree, passedNodes);
                     Console.WriteLine("Game tied");
                     break;
                 case "white":
-//                    winGame(ref eternalTree, passedNodes, "white");
                     Console.WriteLine("White wins!");
+                    whiteAddToWin = 1;
+                    whiteAddToLoss = 0;
+                    blackAddToWin = 0;
+                    blackAddToLoss = 1;
                     break;
                 case "black":
-//                    winGame(ref eternalTree, passedNodes, "black");
                     Console.WriteLine("Black wins!");
+                    whiteAddToWin = 0;
+                    whiteAddToLoss = 1;
+                    blackAddToWin = 1;
+                    blackAddToLoss = 0;
                     break;
-                default: break;
             }
-        }
 
-        private void tieGame(ref EternalTree tree, List<string> passedNodes)
-        {
-            if (passedNodes.Count == 0) return;
-            else
+            foreach (var node in passedNodesWhite)
             {
-                for (int i = 0; i < tree.responses.Count; i++)
+                var state = DatabaseContoller.GetMovesById(node.Key);
+                if (state == null)
                 {
-                    if (tree.responses[i].move.stringMove == passedNodes.First())
-                    {
-                        tree.responses[i].wins += 0.5;
-                        tree.responses[i].losses += 0.5;
-                        passedNodes.RemoveAt(0);
-                        EternalTree updatedTree = tree.responses[i];
-                        tieGame(ref updatedTree, passedNodes);
-                        tree.responses[i] = updatedTree;
-                        break;
-                    }
+                    state = new BoardState(){ Moves = new List<MoveStat>(){ new MoveStat() { l = whiteAddToLoss, w = whiteAddToWin, m = node.Value }}};
+                    DatabaseContoller.WriteToDatabase(node.Key, state);
+                    continue;
                 }
-            }
-        }
 
-        private void winGame(ref EternalTree tree, List<string> passedNodes, string winnerColor)
-        {
-            if (passedNodes.Count == 1) return;
-            else
+                var found = false;
+                foreach (var stateMove in state.Moves)
+                {
+                    if (stateMove.m != node.Value) continue;
+                    stateMove.l += whiteAddToLoss;
+                    stateMove.w += whiteAddToWin;
+                    found = true;
+                    break;
+                }
+
+                if (!found) state.Moves.Add(new MoveStat() {l = whiteAddToLoss, w = whiteAddToWin, m = node.Value});
+
+                DatabaseContoller.WriteToDatabase(node.Key, state);
+            }
+
+            foreach (var node in passedNodesBlack)
             {
-                for (int i = 0; i < tree.responses.Count; i++)
+                var state = DatabaseContoller.GetMovesById(node.Key);
+                if (state == null)
                 {
-                    if (tree.responses[i].move.stringMove == passedNodes.First())
-                    {
-                        tree.responses[i].wins += tree.responses[i].move.color == winnerColor ? 1 : 0;
-                        tree.responses[i].losses += tree.responses[i].move.color == winnerColor ? 0 : 1;
-                        passedNodes.RemoveAt(0);
-                        EternalTree updatedTree = tree.responses[i];
-                        winGame(ref updatedTree, passedNodes, winnerColor);
-                        tree.responses[i] = updatedTree;
-                        break;
-                    }
+                    state = new BoardState() { Moves = new List<MoveStat>() { new MoveStat() { l = blackAddToLoss, w = blackAddToWin, m = node.Value } } };
+                    DatabaseContoller.WriteToDatabase(node.Key, state);
+                    continue;
                 }
+
+                var found = false;
+                foreach (var stateMove in state.Moves)
+                {
+                    if (stateMove.m != node.Value) continue;
+                    stateMove.l += blackAddToLoss;
+                    stateMove.w += blackAddToWin;
+                    found = true;
+                    break;
+                }
+
+                if (!found) state.Moves.Add(new MoveStat() { l = whiteAddToLoss, w = whiteAddToWin, m = node.Value });
+
+                DatabaseContoller.WriteToDatabase(node.Key, state);
             }
         }
-
-
-
-
     }
 }
