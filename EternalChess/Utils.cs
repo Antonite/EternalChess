@@ -39,5 +39,19 @@ namespace EternalChess
                 default: return 0;
             }
         }
+
+        public static bool IsSixPieceOrLess(string fer)
+        {
+            var board = fer.Split()[0];
+            var count = 0;
+            for (var i = 0; i < board.Length; i++)
+            {
+                var charAt = board.ElementAt(i).ToString().ToLower();
+                if (charAt == "r" || charAt == "n" || charAt == "b" || charAt == "q" || charAt == "k" || charAt == "p")
+                    count++;
+            }
+
+            return count <= 6;
+        }
     }
 }

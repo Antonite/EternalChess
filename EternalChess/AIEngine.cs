@@ -49,6 +49,7 @@ namespace EternalChess
             while (true)
             {
                 var fen = ChessBoard.ToFen(colorToMove);
+                var moveTime = 1000;
 
                 var possibleMoves = ChessBoard.findAllMoves(colorToMove);
                 if (possibleMoves.Count == 0)
@@ -73,9 +74,11 @@ namespace EternalChess
                             bestFenMove = move.m;
                         }
                     }
+
+                    if (bestFenMove == "") moveTime = 3000;
                 }
                 
-                if (bestFenMove == "") bestFenMove = askStockfish(moves);
+                if (bestFenMove == "") bestFenMove = askStockfish(moves, moveTime);
                 
 //                if (moveTestNum > moveTests.Length - 1)
 //                {
@@ -113,7 +116,7 @@ namespace EternalChess
             }
         }
 
-        private string askStockfish(string moves)
+        private string askStockfish(string moves, int moveTime)
         {
             var proc = new System.Diagnostics.Process
             {
@@ -130,9 +133,9 @@ namespace EternalChess
             var write = proc.StandardInput;
             write.WriteLine("stockfish_8_x64.exe");
             write.WriteLine("setoption name Threads value 8");
-            write.WriteLine("setoption name SyzygyPath value D:\\syzygy\\dtz");
+            write.WriteLine("setoption name SyzygyPath value D:\\syzygy\\wld");
             write.WriteLine("position startpos moves " + moves);
-            write.WriteLine("go movetime 1000");
+            write.WriteLine("go movetime " + moveTime);
 
             while (true)
             {
@@ -182,6 +185,8 @@ namespace EternalChess
 
             foreach (var node in passedNodesWhite)
             {
+                if (Utils.IsSixPieceOrLess(node.Key)) continue;
+
                 var state = DatabaseContoller.GetMovesById(node.Key);
                 if (state == null)
                 {
@@ -207,6 +212,8 @@ namespace EternalChess
 
             foreach (var node in passedNodesBlack)
             {
+                if (Utils.IsSixPieceOrLess(node.Key)) continue;
+
                 var state = DatabaseContoller.GetMovesById(node.Key);
                 if (state == null)
                 {
