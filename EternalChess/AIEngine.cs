@@ -15,6 +15,8 @@ namespace EternalChess
         public AIEngine()
         {
             Initialize();
+            ExternalUtils.InitializeStockFish();
+            ExternalUtils.InitializeFathom();
         }
 
         private void Initialize()
@@ -36,7 +38,7 @@ namespace EternalChess
             ChessBoard = new ChessBoard();
             var passedNodesWhite = new Dictionary<string, string>();
             var passedNodesBlack = new Dictionary<string, string>();
-            var pastMoves = new List<string>();
+            var pastMoves = new Dictionary<string, int>();
             var colorToMove = "white";
             var moves = "";
 
@@ -62,7 +64,7 @@ namespace EternalChess
                 var bestFenMove = "";
                 if (ChessBoard.remainingPieces <= 6)
                 {
-                    var result = AskFathom(fen);
+                    var result = ExternalUtils.AskFathom(fen);
                     if (!result.Equals("Error"))
                     {
                         EndGame(result, passedNodesWhite, passedNodesBlack);
@@ -87,7 +89,7 @@ namespace EternalChess
                     if (bestFenMove == "") moveTime = 3000;
                 }
                 
-                if (bestFenMove == "") bestFenMove = AskStockfish(moves, moveTime);
+                if (bestFenMove == "") bestFenMove = ExternalUtils.AskStockfish(moves, moveTime);
 
 //                if (moveTestNum > moveTests.Length - 1)
 //                {
@@ -113,14 +115,21 @@ namespace EternalChess
                 {
                     if (!passedNodesBlack.ContainsKey(fen)) passedNodesBlack.Add(fen, bestFenMove);
                 }
-                pastMoves.Add(fen);
+
+                if (pastMoves.ContainsKey(fen))
+                {
+                    pastMoves[fen]++;
+                }
+                else
+                {
+                    pastMoves.Add(fen, 1);
+                }
 
                 //perform move
                 ChessBoard.performMove(bestMove);
                 colorToMove = colorToMove == "white" ? "black" : "white";
 
-                int moveCount = pastMoves.Count;
-                if ((moveCount >= 12 && IsRepeat3Times(pastMoves.GetRange(moveCount - 12, 12))) || ChessBoard.remainingPieces == 2)
+                if (pastMoves[fen] == 3 || ChessBoard.remainingPieces == 2)
                 {
                     EndGame("tie", passedNodesWhite, passedNodesBlack);
                     break;
@@ -128,84 +137,6 @@ namespace EternalChess
             }
         }
 
-        private string AskStockfish(string moves, int moveTime)
-        {
-            var proc = new System.Diagnostics.Process
-            {
-                StartInfo =
-                {
-                    FileName = "cmd.exe",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardInput = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            proc.Start();
-            var write = proc.StandardInput;
-            write.WriteLine("stockfish_8_x64.exe");
-            write.WriteLine("setoption name Threads value 8");
-            write.WriteLine("setoption name Hash value 6144");
-            write.WriteLine("setoption name Ponder value False");
-            write.WriteLine("setoption name SyzygyPath value D:\\syzygy\\wdl;D:\\syzygy\\dtz");
-            write.WriteLine("position startpos moves " + moves);
-            write.WriteLine("go movetime " + moveTime);
-
-            while (true)
-            {
-                var line = proc.StandardOutput.ReadLine();
-                if (line.Contains("bestmove"))
-                {
-                    return line.Split()[1];
-                }
-            }
-        }
-
-        private string AskFathom(string fenMove)
-        {
-            var proc = new System.Diagnostics.Process
-            {
-                StartInfo =
-                {
-                    FileName = "cmd.exe",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardInput = true,
-                    CreateNoWindow = true
-                }
-            };
-
-            proc.Start();
-            var write = proc.StandardInput;
-            write.WriteLine("fathom.exe --path=D:\\syzygy\\wdl;D:\\syzygy\\dtz \"" + fenMove + "\" --test");
-
-            var lineCount = 0;
-            var line = "";
-            while (lineCount <= 4)
-            {
-                lineCount++;
-                line = proc.StandardOutput.ReadLine();
-            }
-
-            switch (line)
-            {
-                case "1 - 0": return "white";
-                case "0 - 1": return "black";
-                case "1/2 - 1/2": return "tie";
-                default: return "Error";
-            }
-        }
-
-        
-
-        private bool IsRepeat3Times(List<string> nodes)
-        {
-            return nodes[0].Equals(nodes[4]) && nodes[0].Equals(nodes[8]) &&
-                    nodes[1].Equals(nodes[5]) && nodes[1].Equals(nodes[9]) &&
-                    nodes[2].Equals(nodes[6]) && nodes[2].Equals(nodes[10]) &&
-                    nodes[3].Equals(nodes[7]) && nodes[3].Equals(nodes[11]);
-        }
 
         private void EndGame(string result, Dictionary<string, string> passedNodesWhite, Dictionary<string, string> passedNodesBlack)
         {
@@ -244,6 +175,7 @@ namespace EternalChess
         {
             foreach (var node in passedNodes)
             {
+                if (Utils.IsSixPieceOrLess(node.Key)) continue;
                 var state = DatabaseContoller.GetMovesById(node.Key);
                 if (state == null)
                 {

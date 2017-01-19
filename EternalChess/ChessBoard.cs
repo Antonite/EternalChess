@@ -1417,14 +1417,18 @@ namespace EternalChess
             output = output.Remove(output.Length - 1);
             output += " " + colorToMove.ElementAt(0) + " ";
 
+            var castling = "";
             // white can castle short
-            if (!whiteKingMoved && !whiteRightRookMoved) output += "K";
+            if (!whiteKingMoved && !whiteRightRookMoved) castling += "K";
             // white can castle long
-            if (!whiteKingMoved && !whiteLeftRookMoved) output += "Q";
+            if (!whiteKingMoved && !whiteLeftRookMoved) castling += "Q";
             // black can castle short
-            if (!blackKingMoved && !blackRightRookMoved) output += "k";
+            if (!blackKingMoved && !blackRightRookMoved) castling += "k";
             // black can castle long
-            if (!blackKingMoved && !blackLeftRookMoved) output += "q";
+            if (!blackKingMoved && !blackLeftRookMoved) castling += "q";
+            if (castling == "") castling = "-";
+
+            output += castling;
 
             // En passant
             var enpassant = "-";
