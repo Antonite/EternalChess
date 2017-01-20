@@ -92,6 +92,8 @@ namespace EternalChess
             _fathomWrite.WriteLine("fathom.exe --path=D:\\syzygy\\wdl;D:\\syzygy\\dtz \"8/p7/5k2/8/5p1P/8/P7/5K2 w - - 0 0\" --test");
             FathomProcess.StandardOutput.ReadLine();
             FathomProcess.StandardOutput.ReadLine();
+            FathomProcess.StandardOutput.ReadLine();
+            FathomProcess.StandardOutput.ReadLine();
         }
     }
 }

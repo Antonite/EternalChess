@@ -34,6 +34,7 @@ namespace EternalChess
 
         private void runSingleGame()
         {
+            // rnbqkbnr/pppppppp
             // ?ChessBoard.ToString(),nq
             ChessBoard = new ChessBoard();
             var passedNodesWhite = new Dictionary<string, string>();
