@@ -27,6 +27,11 @@ namespace EternalChess
             return output;
         }
 
+        public string ToStringMove()
+        {
+            return Utils.ColumnToLetter(before.column) + (before.row + 1) + Utils.ColumnToLetter(after.column) + (after.row + 1);
+        }
+
 
     }
 }

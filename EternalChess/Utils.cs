@@ -53,5 +53,15 @@ namespace EternalChess
 
             return count <= 6;
         }
+
+        public static void PrintResultOfGame(string result)
+        {
+            Console.WriteLine(result);
+            Console.WriteLine("");
+            Console.WriteLine("");
+            Console.WriteLine("");
+            Console.WriteLine("");
+            Console.WriteLine("");
+        }
     }
 }
